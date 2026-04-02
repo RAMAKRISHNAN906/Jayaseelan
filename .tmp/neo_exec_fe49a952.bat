@@ -1,1 +1,0 @@
-findstr /n "stride" "c:\Users\ramak\Desktop\jayaseelan\app\utils\feature_engineer.py"

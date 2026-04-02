@@ -1,1 +1,0 @@
-powershell -Command "Get-Content -Path 'c:\Users\ramak\Desktop\jayaseelan\app\models\cnn_model.py' -TotalCount 921"

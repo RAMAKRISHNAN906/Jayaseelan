@@ -1,1 +1,0 @@
-call c:\Users\ramak\Desktop\jayaseelan\venv\Scripts\activate && cd c:\Users\ramak\Desktop\jayaseelan && python -c "from app.utils.realtime_processor import RealtimeProcessor; print('Import successful')"

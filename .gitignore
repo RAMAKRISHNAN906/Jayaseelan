@@ -9,3 +9,5 @@ uploads/
 app/static/uploads/
 app/static/processed/
 *.log
+.tmp/
+.claude/

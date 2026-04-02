@@ -1,1 +1,0 @@
-call c:\Users\ramak\Desktop\jayaseelan\venv\Scripts\activate && cd c:\Users\ramak\Desktop\jayaseelan && powershell -Command "(Get-Content app\utils\visualizer.py) | ForEach-Object { $_ -replace 'cv2\.FONT_HERSHEY_BOLD', 'cv2.FONT_HERSHEY_SIMPLEX' } | Set-Content app\utils\visualizer.py"

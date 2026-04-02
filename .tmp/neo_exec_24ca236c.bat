@@ -1,1 +1,0 @@
-cd c:\Users\ramak\Desktop\jayaseelan && powershell -Command "(Get-Content -Path 'app\utils\walking_analyzer.py' -Raw).Replace('if landmarks:', 'if len(landmarks) > 0:') | Set-Content -Path 'app\utils\walking_analyzer.py'"

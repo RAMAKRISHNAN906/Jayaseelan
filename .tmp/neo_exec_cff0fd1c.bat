@@ -1,1 +1,0 @@
-powershell -Command "Get-Content -Path 'c:\Users\ramak\Desktop\jayaseelan\app\utils\pose_extractor.py' -TotalCount 500"

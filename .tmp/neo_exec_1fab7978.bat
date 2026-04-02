@@ -1,1 +1,0 @@
-cd c:\Users\ramak\Desktop\jayaseelan && call .\venv\Scripts\activate.bat && python app\utils\walking_analyzer.py

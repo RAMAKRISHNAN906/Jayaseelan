@@ -1,1 +1,0 @@
-cd c:\Users\ramak\Desktop\jayaseelan && call .\venv\Scripts\activate.bat && python --version && pip list 2>&1 | head -20
