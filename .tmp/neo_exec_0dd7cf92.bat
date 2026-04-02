@@ -1,0 +1,1 @@
+cd c:\Users\ramak\Desktop\jayaseelan && powershell -Command "Get-Content -Path 'app\utils\walking_analyzer.py' | Select-Object -Index 395,396,397,398,399,400,401,402,403,404,405"

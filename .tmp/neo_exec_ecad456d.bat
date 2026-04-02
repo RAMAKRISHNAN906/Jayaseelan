@@ -1,0 +1,1 @@
+call c:\Users\ramak\Desktop\jayaseelan\venv\Scripts\activate && python c:\Users\ramak\Desktop\jayaseelan\app\utils\realtime_processor.py

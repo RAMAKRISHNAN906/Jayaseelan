@@ -1,0 +1,1 @@
+powershell -Command "Get-Content -Path 'c:\Users\ramak\Desktop\jayaseelan\app\models\cnn_biLSTM_model.py' -TotalCount 500"

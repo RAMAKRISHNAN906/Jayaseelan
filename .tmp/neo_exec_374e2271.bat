@@ -1,0 +1,1 @@
+cd c:\Users\ramak\Desktop\jayaseelan && call .\venv\Scripts\activate.bat && python app\models\cnn_biLSTM_model.py

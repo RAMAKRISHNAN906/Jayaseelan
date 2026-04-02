@@ -1,0 +1,1 @@
+cd c:\Users\ramak\Desktop\jayaseelan && if not exist ".\venv" python -m venv .\venv && call .\venv\Scripts\activate.bat && pip install opencv-python mediapipe numpy --quiet

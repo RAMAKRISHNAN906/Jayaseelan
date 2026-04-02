@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+app_stdout.log
+app_stderr.log
+uploads/
+app/static/uploads/
+app/static/processed/
+*.log

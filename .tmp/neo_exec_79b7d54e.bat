@@ -1,0 +1,1 @@
+powershell -Command "Get-Content 'c:\Users\ramak\Desktop\jayaseelan\app\utils\feature_engineer.py' -TotalCount 340 | Select-Object -Last 70"

@@ -1,0 +1,1 @@
+call c:\Users\ramak\Desktop\jayaseelan\venv\Scripts\activate.bat && python -c "from app.utils.pose_extractor import extract_pose_from_video; pose_seq, metrics = extract_pose_from_video('uploads/8296233-hd_1080_1920_25fps.mp4', max_frames=10); print(f'Extracted {len(pose_seq)} frames'); print(f'Metrics: {metrics}')"

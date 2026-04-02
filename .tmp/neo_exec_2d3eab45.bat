@@ -1,0 +1,1 @@
+call c:\Users\ramak\Desktop\jayaseelan\venv\Scripts\activate && cd c:\Users\ramak\Desktop\jayaseelan && powershell -Command "(Get-Content test_modules.py -Raw) -replace '✓', 'OK' -replace '�', '' | Set-Content test_modules.py -NoNewline"

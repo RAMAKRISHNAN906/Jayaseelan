@@ -1,0 +1,1 @@
+powershell -Command "Get-Content -Path 'c:\Users\ramak\Desktop\jayaseelan\requirements.txt' -TotalCount 500"

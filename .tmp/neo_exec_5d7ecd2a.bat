@@ -1,0 +1,1 @@
+powershell -Command "Get-Content -Path 'c:\Users\ramak\Desktop\jayaseelan\app\utils\feature_engineer.py' -TotalCount 500"

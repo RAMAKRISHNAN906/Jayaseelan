@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GaitAnalysis Pro — Memory Test</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+  <style>
+    .question-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px 28px;
+      transition: border-color 0.25s ease, background 0.25s ease;
+    }
+    .question-card.correct  { border-color: rgba(16,185,129,0.55); background: rgba(16,185,129,0.06); }
+    .question-card.wrong    { border-color: rgba(239,68,68,0.55);  background: rgba(239,68,68,0.06);  }
+
+    .word-display {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      background: linear-gradient(120deg, #e0d7ff, #a78bfa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      user-select: none;
+    }
+
+    .answer-input {
+      background: rgba(255,255,255,0.05) !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      border-radius: 10px !important;
+      color: #f1f0ff !important;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      padding: 10px 16px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .answer-input:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.22) !important; }
+    .answer-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .feedback-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 99px;
+      letter-spacing: 0.04em;
+      margin-top: 8px;
+    }
+    .feedback-tag.correct { background: rgba(16,185,129,0.18); color: #10b981; }
+    .feedback-tag.wrong   { background: rgba(239,68,68,0.15);  color: #ef4444; }
+
+    .score-ring {
+      position: relative;
+      width: 120px; height: 120px;
+      margin: 0 auto 12px;
+    }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-inner {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .score-number { font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:800; color:#f1f0ff; line-height:1; }
+    .score-label  { font-size:0.65rem; color:#8f89ba; text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
+
+    .hint-text {
+      font-size: 0.78rem;
+      color: #6b6891;
+      margin-top: 6px;
+    }
+    .hint-text span { color: #a78bfa; font-family: monospace; letter-spacing: 0.1em; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar-premium">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="{{ url_for('dashboard') }}" class="navbar-brand-text d-flex align-items-center gap-2" style="text-decoration:none;">
+      <span style="width:34px;height:34px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;box-shadow:0 4px 14px rgba(124,58,237,0.45);flex-shrink:0;">
+        <i class="fa-solid fa-brain"></i>
+      </span>
+      GaitAnalysis Pro
+    </a>
+    <div class="d-flex align-items-center gap-3">
+      <span class="nav-user-badge">
+        <i class="fa-regular fa-circle-user" style="font-size:0.85rem;"></i>
+        {{ user.email }}
+      </span>
+      <a href="{{ url_for('dashboard') }}" class="btn-ghost" style="padding:7px 16px;font-size:0.82rem;">
+        <i class="fa-solid fa-arrow-left"></i> Dashboard
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="max-width:680px; padding:48px 0 80px;">
+
+  <!-- Header -->
+  <div class="animate-fade mb-5">
+    <div class="hero-badge mb-3" style="display:inline-flex;">
+      <i class="fa-solid fa-brain" style="font-size:0.75rem;"></i>
+      Cognitive Assessment
+    </div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:2rem;color:#e0d7ff;line-height:1.2;margin-bottom:10px;">
+      Memory Loss Patient Test
+    </h1>
+    <p style="color:#a8a3cc;font-size:0.95rem;line-height:1.65;max-width:500px;">
+      Read each word carefully, then type it <strong style="color:#c4b5fd;">backwards</strong> in the answer box.
+      For example &nbsp;<span style="font-family:monospace;color:#a78bfa;">forest</span>&nbsp; → &nbsp;<span style="font-family:monospace;color:#a78bfa;">tserof</span>
+    </p>
+  </div>
+
+  <!-- Questions -->
+  <div id="questionsArea">
+    <!-- rendered by JS -->
+  </div>
+
+  <!-- Submit -->
+  <div id="submitArea" class="mt-4">
+    <button class="btn-premium w-100" id="submitBtn" onclick="checkAnswers()" style="padding:14px;font-size:1rem;">
+      <i class="fa-solid fa-check-double"></i>
+      Submit Answers
+    </button>
+  </div>
+
+  <!-- Score panel (hidden until submit) -->
+  <div id="scorePanel" class="glass-card animate-fade mt-5 d-none" style="text-align:center;">
+    <div class="section-title justify-content-center mb-4">
+      <div class="title-icon"><i class="fa-solid fa-star"></i></div>
+      Test Result
+    </div>
+
+    <div class="score-ring">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
+        <circle id="scoreCircle" cx="60" cy="60" r="48" fill="none"
+          stroke="#7c3aed" stroke-width="9"
+          stroke-dasharray="301.6"
+          stroke-dashoffset="301.6"
+          stroke-linecap="round"
+          style="transition: stroke-dashoffset 0.8s ease, stroke 0.8s ease;"/>
+      </svg>
+      <div class="score-inner">
+        <div class="score-number" id="scoreNumber">0/5</div>
+        <div class="score-label">Score</div>
+      </div>
+    </div>
+
+    <div id="scoreMessage" style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;margin-top:8px;"></div>
+    <div id="scoreSubtext"  style="color:#a8a3cc;font-size:0.85rem;margin-top:6px;"></div>
+
+    <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+      <button class="btn-premium" onclick="resetTest()" style="padding:10px 28px;">
+        <i class="fa-solid fa-rotate-right"></i> Try Again
+      </button>
+      <a href="{{ url_for('dashboard') }}" class="btn-ghost" style="padding:10px 24px;">
+        <i class="fa-solid fa-house"></i> Dashboard
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const QUESTIONS = [
+    { word: 'FOREST' },
+    { word: 'APPLE'  },
+    { word: 'RIVER'  },
+    { word: 'CLOUD'  },
+    { word: 'BRIDGE' },
+  ];
+
+  function buildQuestions() {
+    const area = document.getElementById('questionsArea');
+    area.innerHTML = '';
+    QUESTIONS.forEach((q, i) => {
+      area.innerHTML += `
+        <div class="question-card mb-3 animate-fade" id="card${i}" style="animation-delay:${i * 0.07}s;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;">${i + 1}</div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.08em;color:#6b6891;font-weight:600;">Type this word backwards</div>
+          </div>
+          <div class="word-display mb-3">${q.word}</div>
+          <input
+            type="text"
+            class="answer-input"
+            id="ans${i}"
+            placeholder="Type backwards…"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+            onkeydown="if(event.key==='Enter') checkAnswers()"
+          />
+          <div class="hint-text">
+            e.g. <span>${q.word.charAt(0)}…</span> reversed is <span>${q.word.split('').reverse().join('').charAt(0)}…</span>
+          </div>
+          <div id="fb${i}"></div>
+        </div>`;
+    });
+  }
+
+  function checkAnswers() {
+    let correct = 0;
+    QUESTIONS.forEach((q, i) => {
+      const input    = document.getElementById('ans' + i);
+      const card     = document.getElementById('card' + i);
+      const fb       = document.getElementById('fb' + i);
+      const expected = q.word.split('').reverse().join('').toUpperCase();
+      const given    = (input.value || '').trim().toUpperCase();
+
+      input.disabled = true;
+
+      if (given === expected) {
+        correct++;
+        card.classList.add('correct');
+        fb.innerHTML = `<div class="feedback-tag correct"><i class="fa-solid fa-circle-check"></i> Correct! &nbsp;<span style="font-family:monospace;opacity:0.8;">${expected}</span></div>`;
+      } else {
+        card.classList.add('wrong');
+        fb.innerHTML = `<div class="feedback-tag wrong"><i class="fa-solid fa-circle-xmark"></i> Wrong &nbsp;— answer: <span style="font-family:monospace;margin-left:4px;">${expected}</span></div>`;
+      }
+    });
+
+    showScore(correct);
+  }
+
+  function showScore(correct) {
+    document.getElementById('submitArea').classList.add('d-none');
+    const panel = document.getElementById('scorePanel');
+    panel.classList.remove('d-none');
+
+    document.getElementById('scoreNumber').textContent = correct + '/5';
+
+    // ring: circumference = 2*pi*48 ≈ 301.6
+    const offset = 301.6 * (1 - correct / 5);
+    const circle = document.getElementById('scoreCircle');
+    setTimeout(() => {
+      circle.style.strokeDashoffset = offset;
+      circle.style.stroke = correct >= 4 ? '#10b981' : correct >= 2 ? '#f59e0b' : '#ef4444';
+    }, 100);
+
+    const msgs = [
+      { msg: 'Needs Attention', sub: 'Significant memory difficulties detected. Please consult a specialist.',   color: '#ef4444' },
+      { msg: 'Needs Attention', sub: 'Significant memory difficulties detected. Please consult a specialist.',   color: '#ef4444' },
+      { msg: 'Moderate',        sub: 'Some memory challenges present. Follow-up assessment recommended.',        color: '#f59e0b' },
+      { msg: 'Good',            sub: 'Minor difficulties noted. Continue regular monitoring.',                    color: '#f59e0b' },
+      { msg: 'Very Good',       sub: 'Memory recall is mostly intact. Keep up the mental exercises.',            color: '#10b981' },
+      { msg: 'Excellent',       sub: 'Outstanding! All reversed words answered correctly.',                      color: '#10b981' },
+    ];
+    const m = msgs[correct];
+    document.getElementById('scoreMessage').textContent = m.msg;
+    document.getElementById('scoreMessage').style.color = m.color;
+    document.getElementById('scoreSubtext').textContent = m.sub;
+
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function resetTest() {
+    QUESTIONS.forEach((_, i) => {
+      document.getElementById('card' + i).classList.remove('correct', 'wrong');
+      const input = document.getElementById('ans' + i);
+      input.value = '';
+      input.disabled = false;
+      document.getElementById('fb' + i).innerHTML = '';
+    });
+    document.getElementById('submitArea').classList.remove('d-none');
+    document.getElementById('scorePanel').classList.add('d-none');
+    document.getElementById('scoreCircle').style.strokeDashoffset = '301.6';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  buildQuestions();
+</script>
+
+</body>
+</html>

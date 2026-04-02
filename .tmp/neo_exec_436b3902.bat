@@ -1,0 +1,1 @@
+powershell -Command "Get-Content -Path 'c:\Users\ramak\Desktop\jayaseelan\app\utils\walking_analyzer.py' -TotalCount 500"

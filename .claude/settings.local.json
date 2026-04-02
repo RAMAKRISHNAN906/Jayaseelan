@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(venv/Scripts/python main.py)",
+      "Bash(echo \"Started PID: $!\")",
+      "Bash(where ngrok:*)",
+      "Bash(where cloudflared:*)",
+      "Bash(where lt:*)",
+      "Bash(npx --version)"
+    ]
+  }
+}

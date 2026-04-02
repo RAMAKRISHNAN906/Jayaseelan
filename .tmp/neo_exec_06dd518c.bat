@@ -1,0 +1,1 @@
+powershell -Command "Get-Content -Path 'c:\Users\ramak\Desktop\jayaseelan\app\utils\realtime_processor.py' -TotalCount 300"

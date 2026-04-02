@@ -1,0 +1,1 @@
+call c:\Users\ramak\Desktop\jayaseelan\venv\Scripts\activate && cd c:\Users\ramak\Desktop\jayaseelan && python test_modules.py

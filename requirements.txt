@@ -1,0 +1,12 @@
+flask
+opencv-python-headless
+mediapipe
+firebase-admin
+numpy
+pandas
+Pillow
+python-dotenv
+flask-login
+werkzeug
+bcrypt
+gunicorn

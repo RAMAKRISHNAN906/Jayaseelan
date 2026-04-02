@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show:*)",
+      "Bash(python main.py)",
+      "Bash(ls -la c:/Users/ramak/Desktop/jayaseelan/*.json c:/Users/ramak/Desktop/jayaseelan/.env)",
+      "Bash(jobs)",
+      "Bash(curl -s http://localhost:5000 -o /dev/null -w \"%{http_code}\")",
+      "Bash(tasklist /FI \"PID eq 54996\")",
+      "Bash(tasklist /FI \"PID eq 30340\")",
+      "Bash(powershell.exe -Command \"Get-Process -Id 54996,30340 | Select-Object Id,Name,Path\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5001/login)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('/c/Users/ramak/Desktop/jayaseelan/serviceAccountKey.json'\\)\\); print\\('type:', d.get\\('type'\\)\\); print\\('project:', d.get\\('project_id'\\)\\); print\\('client_email:', d.get\\('client_email',''\\)[:30]+'...'\\)\")",
+      "Bash(\"/c/Users/ramak/Desktop/jayaseelan/venv/Scripts/python.exe\" -c \"import json; d=json.load\\(open\\('serviceAccountKey.json'\\)\\); print\\('type:', d.get\\('type'\\)\\); print\\('project:', d.get\\('project_id'\\)\\); print\\('client_email:', d.get\\('client_email',''\\)[:40]+'...'\\)\")",
+      "Bash(\"/c/Users/ramak/Desktop/jayaseelan/venv/Scripts/python.exe\" -c \"import mediapipe; print\\('mediapipe OK:', mediapipe.__version__\\)\")",
+      "Bash(/c/Users/ramak/Desktop/jayaseelan/venv/Scripts/python.exe -c ':*)",
+      "Bash(venv/Scripts/python.exe -c \"import flask; print\\(flask.__version__\\)\")",
+      "Bash(venv/Scripts/pip.exe install:*)",
+      "Bash(venv/Scripts/python.exe main.py)",
+      "Bash(sleep 5 cat C:/Users/ramak/AppData/Local/Temp/claude/c--Users-ramak-Desktop-jayaseelan/97820c69-b1f5-4a08-86dc-5502739c23f8/tasks/*.output)",
+      "Bash(echo \"Flask PID: $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5001/)",
+      "Bash(sed -i 's|<div id=\"authError\" class=\"alert alert-danger animate-fade d-none\"></div>|<div id=\"authError\" class=\"alert alert-danger animate-fade d-none\"></div>\\\\n            <div id=\"authSuccess\" class=\"alert alert-success animate-fade d-none\">Account created! Signing in...</div>|' \"/c/Users/ramak/Desktop/jayaseelan/app/templates/register.html\")",
+      "Bash(sed -i 's|<button id=\"registerSubmit\" type=\"submit\" class=\"btn btn-premium w-100 py-3 mt-2\">Create Account</button>|<button id=\"registerSubmit\" type=\"submit\" class=\"btn btn-premium w-100 py-3 mt-2\"><span id=\"registerBtnText\"><i class=\"fas fa-user-plus me-2\"></i>Create Account</span><span id=\"registerSpinner\" class=\"d-none\"><span class=\"spinner-border spinner-border-sm me-2\"></span>Creating account...</span></button>|' \"/c/Users/ramak/Desktop/jayaseelan/app/templates/register.html\")",
+      "Bash(pkill -f \"venv/Scripts/python.exe main.py\")",
+      "Bash(echo \"PID: $!\")",
+      "Bash(pkill -f \"python.exe main.py\")",
+      "Bash(venv/Scripts/python.exe -c ':*)",
+      "Bash(kill %1 %2)",
+      "Bash(python3 -c ':*)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\ramak\\\\Desktop\\\\jayaseelan\\\\app\\\\static\\\\css\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\ramak\\\\Desktop\\\\jayaseelan\\\\app\\\\templates\")"
+    ]
+  }
+}
