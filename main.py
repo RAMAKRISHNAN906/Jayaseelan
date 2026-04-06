@@ -21,10 +21,35 @@ from app.models.cnn_model import load_dementia_model, predict_risk
 from app.utils.firebase_config import initialize_firebase
 from app.utils.gait_processor import process_video, save_debug_frames, process_single_frame
 
-# In-memory cache: key = "sha256hash_tasktype" -> {prediction, debug_frames}
-# Guarantees identical results for the same video uploaded multiple times.
+# Persistent disk cache: results survive server restarts.
+# key = "sha256[:16]_tasktype"  value = {prediction, debug_frames}
 _prediction_cache = {}
 _prediction_cache_lock = threading.Lock()
+_CACHE_DIR = os.path.join('app', 'static', 'cache')
+
+def _cache_path(cache_key):
+    safe = cache_key.replace('/', '_')
+    return os.path.join(_CACHE_DIR, f"{safe}.json")
+
+def _load_cache(cache_key):
+    """Load result from disk cache. Returns None if not found."""
+    try:
+        p = _cache_path(cache_key)
+        if os.path.exists(p):
+            with open(p, 'r') as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return None
+
+def _save_cache(cache_key, data):
+    """Save result to disk cache."""
+    try:
+        os.makedirs(_CACHE_DIR, exist_ok=True)
+        with open(_cache_path(cache_key), 'w') as f:
+            json.dump(data, f)
+    except Exception:
+        pass
 
 # In-memory background extraction jobs.
 _background_jobs = {}
@@ -418,8 +443,14 @@ def predict():
         cache_key = f"{video_sha256}_{task_type}"
         video_url = _build_video_url(video_bytes, video_sha256, file_name)
 
+        # Check memory cache first, then disk cache
         with _prediction_cache_lock:
             cached = _prediction_cache.get(cache_key)
+        if not cached:
+            cached = _load_cache(cache_key)
+            if cached:
+                with _prediction_cache_lock:
+                    _prediction_cache[cache_key] = cached
 
         if cached:
             print(f"[Predict] Served from cache: {cache_key[:20]}")
@@ -448,11 +479,10 @@ def predict():
         prediction = predict_risk(model, processed_frames, task_type, walking_quality)
         print(f"[Predict] Prediction: level={prediction.get('level')}, score={prediction.get('score')}")
 
+        result_data = {"prediction": prediction, "debug_frames": debug_frames}
         with _prediction_cache_lock:
-            _prediction_cache[cache_key] = {
-                "prediction": prediction,
-                "debug_frames": debug_frames,
-            }
+            _prediction_cache[cache_key] = result_data
+        _save_cache(cache_key, result_data)
 
         # Fire-and-forget Firebase write — never block the response
         def _fb_write(uid, tt, pred):
