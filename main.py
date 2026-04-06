@@ -534,8 +534,8 @@ def predict():
     except Exception as exc:
         print(f"[Predict] ERROR: {exc}")
         traceback.print_exc()
-        flash(f"Processing failed: {exc}")
-        return redirect(url_for('dashboard_clinical'))
+        # Return error directly — don't silently redirect to homepage
+        return render_template('error.html', error=str(exc)), 500
 
 
 @app.route('/memory_test')

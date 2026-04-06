@@ -249,7 +249,7 @@ def _mock_walking_score(seed=None):
         'trunk_sway':    m(8),
         'arm_swing':     m(11),
         'knee_flex':     m(8),
-        'cadence':       round(np.clip(s + jitter(), 0, 100), 1),
+        'cadence':        m(7),
         'detection_rate': 0.0,
         'frames_analyzed': 0,
     }
