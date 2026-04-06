@@ -3,529 +3,984 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GaitAnalysis Pro — Results</title>
+  <title>NeuroCare — Gait Analysis Results</title>
 
-  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <!-- Custom CSS -->
-  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #030a19;
+      --line: rgba(140,172,224,0.16);
+      --text: #ecf4ff;
+      --muted: #7a95c8;
+      --accent: #38bdf8;
+      --accent2: #14b8a6;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background: var(--bg);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 12% -8%, rgba(56,189,248,0.16) 0%, transparent 65%),
+        radial-gradient(ellipse 65% 45% at 92% 4%, rgba(20,184,166,0.13) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 50% at 50% 108%, rgba(168,85,247,0.08) 0%, transparent 65%);
+    }
+
+    /* grid lines */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(126,157,210,0.042) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126,157,210,0.035) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 85% 75% at center, black 20%, transparent 70%);
+    }
+
+    /* ── TOPBAR ── */
+    .neuro-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 150;
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      background: rgba(3,9,20,0.82);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 4px 28px rgba(0,0,0,0.4);
+    }
+
+    .topbar-row {
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 24px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0ea5e9, #0f766e);
+      color: #fff;
+      font-size: 1rem;
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.4), 0 8px 22px rgba(14,165,233,0.3);
+    }
+
+    .brand-name {
+      font-size: 1.05rem;
+      background: linear-gradient(90deg, #e0f2fe, #99f6e4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.59rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      -webkit-text-fill-color: var(--muted);
+    }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(56,189,248,0.28);
+      background: rgba(56,189,248,0.09);
+      color: #bae6fd;
+      font-size: 0.71rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(6,14,34,0.72);
+      color: var(--text);
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+      color: #e2f6ff;
+      border-color: rgba(56,189,248,0.38);
+      background: rgba(56,189,248,0.08);
+      transform: translateX(-2px);
+    }
+
+    /* ── PANELS ── */
+    .panel {
+      background: linear-gradient(158deg, rgba(7,16,37,0.96), rgba(5,11,27,0.9));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 22px 52px rgba(1,6,18,0.6), 0 1px 0 rgba(125,211,252,0.08) inset;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(125,211,252,0.5) 35%, rgba(45,212,191,0.4) 65%, transparent);
+    }
+
+    .panel-body { padding: 28px; }
+
+    .section-label {
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .section-label-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(56,189,248,0.24), rgba(20,184,166,0.2));
+      color: #7dd3fc;
+      font-size: 0.75rem;
+      border: 1px solid rgba(56,189,248,0.18);
+    }
+
+    /* ── TASK CHIP ── */
+    .task-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(99,102,241,0.35);
+      background: rgba(99,102,241,0.1);
+      color: #c7d2fe;
+      font-size: 0.73rem;
+      font-weight: 700;
+      padding: 5px 14px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    /* ── WALKING QUALITY RING ── */
+    .ring-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .ring-container {
+      position: relative;
+      width: 170px;
+      height: 170px;
+    }
+
+    .ring-container svg {
+      width: 170px;
+      height: 170px;
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg   { fill: none; stroke: rgba(140,172,224,0.1); stroke-width: 10; }
+    .ring-track { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.22,1,0.36,1); }
+
+    .ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-number {
+      font-family: 'Sora', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .ring-unit {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .ring-sublabel {
+      margin-top: 10px;
+      font-size: 0.73rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* ── RISK DISPLAY ── */
+    .risk-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .risk-big {
+      font-family: 'Sora', sans-serif;
+      font-weight: 800;
+      font-size: 2.8rem;
+      line-height: 1;
+    }
+
+    .risk-tag {
+      border-radius: 999px;
+      border: 1px solid;
+      padding: 6px 14px;
+      font-size: 0.73rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .tag-low    { color: #86efac; background: rgba(34,197,94,0.11);  border-color: rgba(34,197,94,0.35); }
+    .tag-medium { color: #fcd34d; background: rgba(245,158,11,0.11); border-color: rgba(245,158,11,0.35); }
+    .tag-high   { color: #fda4af; background: rgba(239,68,68,0.11);  border-color: rgba(239,68,68,0.35); }
+
+    .confidence-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .confidence-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 8px rgba(20,184,166,0.7);
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+
+    /* ── RISK PROGRESS BAR ── */
+    .risk-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(140,172,224,0.1);
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+
+    .risk-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 1.4s cubic-bezier(0.22,1,0.36,1);
+      width: 0%;
+    }
+
+    .rf-low    { background: linear-gradient(90deg,#22c55e,#4ade80); box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+    .rf-medium { background: linear-gradient(90deg,#f59e0b,#fbbf24); box-shadow: 0 0 8px rgba(245,158,11,0.5); }
+    .rf-high   { background: linear-gradient(90deg,#ef4444,#f87171); box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+
+    /* ── METRIC BARS ── */
+    .metric-row { margin-bottom: 14px; }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .metric-label {
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-label i { color: var(--accent); font-size: 0.68rem; }
+
+    .metric-value {
+      font-size: 0.8rem;
+      font-weight: 800;
+      font-family: 'Sora', sans-serif;
+      color: #d8e9ff;
+    }
+
+    .metric-track {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(140,172,224,0.1);
+      overflow: hidden;
+    }
+
+    .metric-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
+      width: 0%;
+    }
+
+    .mf-good   { background: linear-gradient(90deg,#22c55e,#4ade80); box-shadow: 0 0 6px rgba(34,197,94,0.45); }
+    .mf-medium { background: linear-gradient(90deg,#f59e0b,#fbbf24); box-shadow: 0 0 6px rgba(245,158,11,0.45); }
+    .mf-bad    { background: linear-gradient(90deg,#ef4444,#f87171); box-shadow: 0 0 6px rgba(239,68,68,0.45); }
+
+    /* ── CLINICAL BLOCK ── */
+    .clinical-block {
+      border-radius: 16px;
+      border: 1px solid;
+      padding: 16px 18px;
+      font-size: 0.84rem;
+      line-height: 1.68;
+      margin-top: 4px;
+    }
+
+    .cb-low    { border-color: rgba(34,197,94,0.28); background: rgba(34,197,94,0.07); color: #bbf7d0; }
+    .cb-medium { border-color: rgba(245,158,11,0.28); background: rgba(245,158,11,0.07); color: #fef3c7; }
+    .cb-high   { border-color: rgba(239,68,68,0.28); background: rgba(239,68,68,0.07); color: #fee2e2; }
+
+    .cb-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+      margin: 20px 0;
+    }
+
+    /* ── VIDEO PANEL ── */
+    .video-wrap {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid rgba(56,189,248,0.2);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.06) inset, 0 0 30px rgba(56,189,248,0.08);
+      margin-bottom: 22px;
+    }
+
+    .video-wrap video {
+      width: 100%;
+      display: block;
+      max-height: 300px;
+      object-fit: cover;
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #38bdf8, #2dd4bf, #38bdf8, transparent);
+      box-shadow: 0 0 12px rgba(56,189,248,0.9);
+      top: 0;
+      animation: scanMove 2.4s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    @keyframes scanMove {
+      0%   { top: 0%;   opacity: 1; }
+      45%  { top: 95%;  opacity: 1; }
+      55%  { top: 95%;  opacity: 0; }
+      56%  { top: 0%;   opacity: 0; }
+      60%  { top: 0%;   opacity: 1; }
+      100% { top: 0%;   opacity: 1; }
+    }
+
+    /* corner brackets */
+    .corner { position: absolute; width: 18px; height: 18px; z-index: 4; }
+    .corner.tl { top:10px; left:10px;  border-top:2px solid #38bdf8; border-left:2px solid #38bdf8;  border-radius:2px 0 0 0; }
+    .corner.tr { top:10px; right:10px; border-top:2px solid #38bdf8; border-right:2px solid #38bdf8; border-radius:0 2px 0 0; }
+    .corner.bl { bottom:10px; left:10px;  border-bottom:2px solid #38bdf8; border-left:2px solid #38bdf8;  border-radius:0 0 0 2px; }
+    .corner.br { bottom:10px; right:10px; border-bottom:2px solid #38bdf8; border-right:2px solid #38bdf8; border-radius:0 0 2px 0; }
+
+    .scan-pill {
+      position: absolute;
+      bottom: 12px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(3,9,20,0.78);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56,189,248,0.3);
+      border-radius: 999px;
+      padding: 5px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 5;
+      white-space: nowrap;
+    }
+
+    .scan-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+      animation: pulseDot 1.2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    .scan-text {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #7dd3fc;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      border-radius: 14px;
+      border: 1px solid rgba(140,172,224,0.14);
+      background: rgba(5,13,30,0.7);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .stat-lbl {
+      font-size: 0.64rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    /* ── CHART ── */
+    .chart-wrap {
+      position: relative;
+      height: 230px;
+    }
+
+    /* ── LEGEND ── */
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ── ANIMATIONS ── */
+    .animate-rise { animation: rise 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+    .delay-1 { animation-delay: 0.1s; }
+
+    @keyframes rise     { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pulseDot { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 575px) {
+      .panel-body { padding: 18px; }
+      .ring-container { width: 140px; height: 140px; }
+      .ring-container svg { width: 140px; height: 140px; }
+      .risk-big { font-size: 2.1rem; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.18); border-radius: 999px; }
+  </style>
 </head>
 <body>
 
-<!-- ================================================================
-     NAVBAR
-     ================================================================ -->
-<nav class="navbar-premium">
-  <div class="container d-flex align-items-center justify-content-between">
-
-    <a href="{{ url_for('dashboard') }}" class="navbar-brand-text d-flex align-items-center gap-2" style="text-decoration:none;">
-      <span style="
-        width:34px; height:34px;
-        background: linear-gradient(135deg, #7c3aed, #4f46e5);
-        border-radius:9px;
-        display:flex; align-items:center; justify-content:center;
-        font-size:1.1rem; color:#fff;
-        box-shadow:0 4px 14px rgba(124,58,237,0.45);
-        flex-shrink:0;
-      ">
-        <i class="fa-solid fa-brain"></i>
+<!-- TOPBAR -->
+<nav class="neuro-topbar">
+  <div class="topbar-row">
+    <a href="{{ url_for('dashboard') }}" class="brand">
+      <span class="brand-icon"><i class="fa-solid fa-brain"></i></span>
+      <span>
+        <span class="brand-name">NeuroCare</span>
+        <small>Gait Analysis Results</small>
       </span>
-      GaitAnalysis Pro
     </a>
 
-    <div class="d-flex align-items-center gap-3">
-      <span style="
-        font-size:0.78rem;
-        font-weight:600;
-        color:#a78bfa;
-        letter-spacing:0.05em;
-        text-transform:uppercase;
-        background:rgba(124,58,237,0.10);
-        border:1px solid rgba(124,58,237,0.25);
-        padding:4px 12px;
-        border-radius:99px;
-      ">
-        <i class="fa-solid fa-chart-bar" style="margin-right:5px;"></i>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="result-badge">
+        <i class="fa-solid fa-chart-area"></i>
         Result Intelligence
       </span>
-      <a href="{{ url_for('logout') }}" class="btn-ghost" style="padding:7px 16px; font-size:0.82rem;">
+      <a href="{{ url_for('logout') }}" class="btn-back" style="border-color:rgba(245,158,11,0.28);color:#fde68a;">
         <i class="fa-solid fa-arrow-right-from-bracket"></i>
         Logout
       </a>
     </div>
-
   </div>
 </nav>
 
-<!-- ================================================================
-     MAIN CONTENT
-     ================================================================ -->
-<div class="container" style="padding:40px 0 70px;">
+<!-- MAIN -->
+<div class="container-fluid px-lg-4 px-3 py-4 pb-5" style="position:relative;z-index:1;">
   <div class="row g-4">
 
-    <!-- ============================================================
-         LEFT — Main Analysis Card
-         ============================================================ -->
-    <div class="col-lg-7 animate-fade">
-      <div class="glass-card">
+    <!-- LEFT — Analysis -->
+    <div class="col-lg-7 animate-rise">
+      <div class="panel panel-body">
 
-        <!-- Task type badge -->
-        <div class="mb-3">
-          <span style="
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            background:rgba(124,58,237,0.14);
-            border:1px solid rgba(124,58,237,0.30);
-            color:#c4b5fd;
-            font-size:0.75rem;
-            font-weight:700;
-            padding:4px 13px;
-            border-radius:99px;
-            letter-spacing:0.06em;
-            text-transform:uppercase;
-          ">
-            <i class="fa-solid fa-person-walking"></i>
-            {{ task_type | title }} Task Analysis
-          </span>
+        <!-- Task chip -->
+        <div class="task-chip">
+          <i class="fa-solid fa-person-walking"></i>
+          {{ task_type | title }} Task Analysis
         </div>
 
-        <!-- Walking Quality Ring -->
-        <div class="score-ring-wrap mb-2">
-          <div class="section-title" style="justify-content:center; margin-bottom:10px;">
-            <div class="title-icon"><i class="fa-solid fa-gauge-high"></i></div>
-            Walking Quality Score
-          </div>
+        <!-- Walking quality ring -->
+        <div class="section-label">
+          <span class="section-label-icon"><i class="fa-solid fa-gauge-high"></i></span>
+          Walking Quality Score
+        </div>
 
-          <div class="score-ring" id="scoreRingWrap">
-            <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
-              <!-- Background circle -->
-              <circle class="ring-bg" cx="80" cy="80" r="70" />
-              <!-- Fill circle (stroke-dasharray=440, offset computed in JS) -->
-              <circle
-                class="ring-fill"
-                id="ringFillEl"
-                cx="80" cy="80" r="70"
-                stroke-dasharray="440"
-                stroke-dashoffset="440"
-                stroke="#10b981"
+        <div class="ring-wrap">
+          <div class="ring-container">
+            <svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+              <circle class="ring-bg" cx="85" cy="85" r="72"/>
+              <circle class="ring-track" id="ringFill"
+                cx="85" cy="85" r="72"
+                stroke-dasharray="452"
+                stroke-dashoffset="452"
+                stroke="#38bdf8"
               />
             </svg>
-            <div class="score-ring-label">
-              <span class="score-ring-number" id="ringNumber">0</span>
-              <span class="score-ring-unit">/ 100</span>
+            <div class="ring-label">
+              <span class="ring-number" id="ringNum" style="color:#38bdf8;">0</span>
+              <span class="ring-unit">/ 100</span>
             </div>
           </div>
+          <div class="ring-sublabel">
+            {% set wlabel = prediction.walking_label | lower %}
+            <span class="risk-tag
+              {% if wlabel == 'good walking' or wlabel == 'normal' %}tag-low
+              {% elif wlabel == 'irregular walking' %}tag-medium
+              {% else %}tag-high{% endif %}
+            ">
+              <i class="fa-solid fa-circle" style="font-size:0.38rem;"></i>
+              {{ prediction.walking_label }}
+            </span>
+          </div>
+        </div>
 
-          <!-- Walking label badge -->
-          {% set wlabel = prediction.walking_label | lower %}
-          <span class="result-level-badge
-            {% if wlabel == 'normal' or wlabel == 'good' %}level-low
-            {% elif wlabel == 'mild' or wlabel == 'moderate' %}level-medium
-            {% else %}level-high{% endif %}
+        <div class="divider"></div>
+
+        <!-- Cognitive risk score -->
+        <div class="section-label">
+          <span class="section-label-icon"><i class="fa-solid fa-brain"></i></span>
+          Cognitive Risk Score
+        </div>
+
+        <div class="risk-row">
+          <span class="risk-big
+            {% if prediction.color == 'success' %}
+              " style="color:#34d399;">
+            {% elif prediction.color == 'warning' %}
+              " style="color:#fbbf24;">
+            {% else %}
+              " style="color:#f87171;">
+            {% endif %}
+            {{ prediction.score }}%
+          </span>
+          <span class="risk-tag
+            {% if prediction.color == 'success' %}tag-low
+            {% elif prediction.color == 'warning' %}tag-medium
+            {% else %}tag-high{% endif %}
           ">
-            <i class="fa-solid fa-circle" style="font-size:0.45rem;"></i>
-            {{ prediction.walking_label }}
+            <i class="fa-solid fa-circle" style="font-size:0.38rem;"></i>
+            {{ prediction.level }}
           </span>
         </div>
 
-        <div class="divider"></div>
+        <div class="confidence-row">
+          <span class="confidence-dot"></span>
+          Model Confidence:
+          <strong style="color:#99f6e4;">{{ prediction.confidence | default(85) }}%</strong>
+          &nbsp;·&nbsp; Frames Analyzed:
+          <strong style="color:#99f6e4;">{{ prediction.frames_analyzed | default(0) }}</strong>
+          &nbsp;·&nbsp; Detection Rate:
+          <strong style="color:#99f6e4;">{{ prediction.detection_rate | default(0) }}%</strong>
+        </div>
 
-        <!-- Cognitive Risk Score -->
-        <div class="mb-3">
-          <div class="section-title" style="margin-bottom:12px;">
-            <div class="title-icon"><i class="fa-solid fa-brain"></i></div>
-            Cognitive Risk Score
-          </div>
-
-          <div class="d-flex align-items-center gap-3 mb-2">
-            <span style="font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:2.6rem; line-height:1;
-              {% if prediction.color == 'success' %}color:#34d399;
-              {% elif prediction.color == 'warning' %}color:#fbbf24;
-              {% else %}color:#f87171;{% endif %}
-            ">
-              {{ prediction.score }}%
-            </span>
-            <span class="result-level-badge
-              {% if prediction.level | lower == 'low' %}level-low
-              {% elif prediction.level | lower == 'medium' or prediction.level | lower == 'moderate' %}level-medium
-              {% else %}level-high{% endif %}
-            ">
-              <i class="fa-solid fa-circle" style="font-size:0.45rem;"></i>
-              {{ prediction.level }} Risk
-            </span>
-          </div>
-
-          <div class="risk-progress">
-            <div
-              class="risk-progress-fill
-                {% if prediction.color == 'success' %}prog-low
-                {% elif prediction.color == 'warning' %}prog-medium
-                {% else %}prog-high{% endif %}
-              "
-              id="riskFillEl"
-              style="width:0%;"
-            ></div>
-          </div>
+        <div class="risk-track">
+          <div class="risk-fill
+            {% if prediction.color == 'success' %}rf-low
+            {% elif prediction.color == 'warning' %}rf-medium
+            {% else %}rf-high{% endif %}
+          " id="riskFill" style="width:0%;"></div>
         </div>
 
         <div class="divider"></div>
 
-        <!-- Posture Metrics Breakdown -->
-        <div class="section-title" style="margin-bottom:14px;">
-          <div class="title-icon"><i class="fa-solid fa-chart-simple"></i></div>
-          Posture Metrics
+        <!-- Posture metrics -->
+        <div class="section-label">
+          <span class="section-label-icon"><i class="fa-solid fa-chart-simple"></i></span>
+          Biomechanical Metrics
         </div>
 
-        <!-- Spine -->
-        <div class="metric-row">
-          <div class="metric-header">
-            <span class="metric-label"><i class="fa-solid fa-bone" style="font-size:0.7rem; margin-right:5px;"></i>Spine Alignment</span>
-            <span class="metric-value" id="mValSpine">0</span>
-          </div>
-          <div class="metric-track">
-            <div class="metric-fill" id="mFillSpine" style="width:0%;"></div>
-          </div>
-        </div>
+        {% set metrics_display = [
+          ('fa-bone',            'Spine Alignment',     'spine',         'mSpine'),
+          ('fa-arrows-left-right','Shoulder Symmetry',  'shoulder',      'mShoulder'),
+          ('fa-circle-dot',      'Hip Stability',       'hip',           'mHip'),
+          ('fa-head-side',       'Head Posture',        'head',          'mHead'),
+          ('fa-shoe-prints',     'Step Symmetry',       'step_symmetry', 'mStep'),
+          ('fa-scale-balanced',  'Balance',             'balance',       'mBalance'),
+          ('fa-arrows-up-down',  'Trunk Sway',          'trunk_sway',    'mTrunk'),
+          ('fa-hand',            'Arm Swing',           'arm_swing',     'mArm'),
+          ('fa-angles-down',     'Knee Flexion',        'knee_flex',     'mKnee'),
+          ('fa-metronome',       'Cadence Regularity',  'cadence',       'mCadence'),
+        ] %}
 
-        <!-- Shoulder -->
+        {% for icon, label, key, eid in metrics_display %}
+        {% set val = prediction.metrics[key] | default(0) %}
         <div class="metric-row">
           <div class="metric-header">
-            <span class="metric-label"><i class="fa-solid fa-arrows-left-right" style="font-size:0.7rem; margin-right:5px;"></i>Shoulder Symmetry</span>
-            <span class="metric-value" id="mValShoulder">0</span>
+            <span class="metric-label"><i class="fa-solid {{ icon }}"></i>{{ label }}</span>
+            <span class="metric-value" id="{{ eid }}Val">0</span>
           </div>
           <div class="metric-track">
-            <div class="metric-fill" id="mFillShoulder" style="width:0%;"></div>
+            <div class="metric-fill" id="{{ eid }}Fill"
+              data-val="{{ val }}"
+              style="width:0%;"></div>
           </div>
         </div>
-
-        <!-- Hip -->
-        <div class="metric-row">
-          <div class="metric-header">
-            <span class="metric-label"><i class="fa-solid fa-circle-dot" style="font-size:0.7rem; margin-right:5px;"></i>Hip Stability</span>
-            <span class="metric-value" id="mValHip">0</span>
-          </div>
-          <div class="metric-track">
-            <div class="metric-fill" id="mFillHip" style="width:0%;"></div>
-          </div>
-        </div>
-
-        <!-- Head -->
-        <div class="metric-row">
-          <div class="metric-header">
-            <span class="metric-label"><i class="fa-solid fa-head-side-cough" style="font-size:0.7rem; margin-right:5px;"></i>Head Posture</span>
-            <span class="metric-value" id="mValHead">0</span>
-          </div>
-          <div class="metric-track">
-            <div class="metric-fill" id="mFillHead" style="width:0%;"></div>
-          </div>
-        </div>
-
-        <!-- Step Symmetry -->
-        <div class="metric-row">
-          <div class="metric-header">
-            <span class="metric-label"><i class="fa-solid fa-shoe-prints" style="font-size:0.7rem; margin-right:5px;"></i>Step Symmetry</span>
-            <span class="metric-value" id="mValStep">0</span>
-          </div>
-          <div class="metric-track">
-            <div class="metric-fill" id="mFillStep" style="width:0%;"></div>
-          </div>
-        </div>
+        {% endfor %}
 
         <div class="divider"></div>
 
-        <!-- Clinical Interpretation Info Block -->
-        <div class="info-block
-          {% if prediction.color == 'success' %}info-block-low
-          {% elif prediction.color == 'warning' %}info-block-medium
-          {% else %}info-block-high{% endif %}
-          mb-4
+        <!-- Clinical interpretation -->
+        <div class="section-label">
+          <span class="section-label-icon"><i class="fa-solid fa-stethoscope"></i></span>
+          Clinical Interpretation
+        </div>
+
+        <div class="clinical-block
+          {% if prediction.color == 'success' %}cb-low
+          {% elif prediction.color == 'warning' %}cb-medium
+          {% else %}cb-high{% endif %}
         ">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px; font-weight:700; font-size:0.86rem;">
-            <i class="fa-solid fa-stethoscope"></i>
-            Clinical Interpretation
+          <div class="cb-title">
+            <i class="fa-solid
+              {% if prediction.color == 'success' %}fa-circle-check
+              {% elif prediction.color == 'warning' %}fa-triangle-exclamation
+              {% else %}fa-circle-xmark{% endif %}
+            "></i>
+            {{ prediction.level }} — {{ prediction.walking_label }}
           </div>
-          {% if prediction.color == 'success' %}
-            Gait analysis indicates <strong>normal walking patterns</strong> with low markers for cognitive impairment. Posture metrics are within expected healthy ranges. Routine monitoring is recommended; no immediate clinical action required.
-          {% elif prediction.color == 'warning' %}
-            Gait analysis reveals <strong>mild irregularities</strong> that may correspond to early-stage cognitive changes. Some postural deviations detected. A follow-up clinical assessment is advisable within the next 4–8 weeks.
-          {% else %}
-            Gait analysis shows <strong>significant postural and symmetry deviations</strong> associated with elevated cognitive risk. Immediate referral to a neurologist or geriatric specialist is strongly recommended for comprehensive evaluation.
-          {% endif %}
+          {{ prediction.recommendation | default('') }}
         </div>
 
-        <!-- Back Button -->
-        <a href="{{ url_for('dashboard') }}" class="btn-ghost d-inline-flex align-items-center gap-2">
-          <i class="fa-solid fa-arrow-left"></i>
-          Back to Dashboard
-        </a>
+        <!-- Back button -->
+        <div style="margin-top:24px;">
+          <a href="{{ url_for('dashboard') }}" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Dashboard
+          </a>
+        </div>
 
-      </div><!-- /glass-card -->
+      </div>
     </div>
 
-    <!-- ============================================================
-         RIGHT — Video Analysis Card
-         ============================================================ -->
-    <div class="col-lg-5 animate-fade" style="animation-delay:0.15s;">
-      <div class="glass-card" style="background:rgba(255,255,255,0.025);">
+    <!-- RIGHT — Video + Chart -->
+    <div class="col-lg-5 animate-rise delay-1">
+      <div class="panel panel-body">
 
-        <!-- Title -->
-        <div class="section-title mb-3">
-          <div class="title-icon"><i class="fa-solid fa-video"></i></div>
+        <div class="section-label">
+          <span class="section-label-icon"><i class="fa-solid fa-video"></i></span>
           Analysed Video
         </div>
 
-        <!-- ── Video player with scanning overlay ── -->
-        <div id="videoWrap" style="
-          position: relative;
-          border-radius: 14px;
-          overflow: hidden;
-          background: #000;
-          border: 1px solid rgba(124,58,237,0.25);
-          box-shadow: 0 0 30px rgba(124,58,237,0.15);
-          margin-bottom: 20px;
-        ">
-          {% if video_url %}
+        {% if video_url %}
+        <div class="video-wrap">
           <video id="analysisVideo"
             src="{{ url_for('static', filename=video_url) }}"
-            autoplay loop muted playsinline
-            style="width:100%; display:block; max-height:320px; object-fit:cover;">
+            autoplay loop muted playsinline>
           </video>
-          {% else %}
-          <div style="height:220px; display:flex; align-items:center; justify-content:center; color:#4b4869;">
-            <i class="fa-solid fa-film" style="font-size:2.5rem;"></i>
+          <div class="scan-line" id="scanLine"></div>
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+          <div class="scan-pill">
+            <span class="scan-dot" id="scanDot"></span>
+            <span class="scan-text" id="scanText">Analysing<span id="scanDots"></span></span>
           </div>
-          {% endif %}
+        </div>
+        {% endif %}
 
-          <!-- Scanning line -->
-          <div id="scanLine" style="
-            position: absolute; left:0; right:0; height:2px;
-            background: linear-gradient(90deg, transparent, #7c3aed, #a78bfa, #7c3aed, transparent);
-            box-shadow: 0 0 12px rgba(124,58,237,0.9);
-            top: 0;
-            animation: scanMove 2.2s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 3;
-          "></div>
-
-          <!-- Corner brackets -->
-          <div style="position:absolute;top:10px;left:10px;width:20px;height:20px;border-top:2px solid #a78bfa;border-left:2px solid #a78bfa;border-radius:2px 0 0 0;z-index:4;"></div>
-          <div style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-top:2px solid #a78bfa;border-right:2px solid #a78bfa;border-radius:0 2px 0 0;z-index:4;"></div>
-          <div style="position:absolute;bottom:10px;left:10px;width:20px;height:20px;border-bottom:2px solid #a78bfa;border-left:2px solid #a78bfa;border-radius:0 0 0 2px;z-index:4;"></div>
-          <div style="position:absolute;bottom:10px;right:10px;width:20px;height:20px;border-bottom:2px solid #a78bfa;border-right:2px solid #a78bfa;border-radius:0 0 2px 0;z-index:4;"></div>
-
-          <!-- Analysing label -->
-          <div style="
-            position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
-            background:rgba(13,13,26,0.75); backdrop-filter:blur(8px);
-            border:1px solid rgba(124,58,237,0.35);
-            border-radius:99px; padding:5px 16px;
-            display:flex; align-items:center; gap:8px;
-            z-index:5; white-space:nowrap;
-          ">
-            <span style="
-              width:7px;height:7px;border-radius:50%;
-              background:#a78bfa;
-              box-shadow:0 0 8px #7c3aed;
-              animation:pulse 1s ease-in-out infinite;
-              flex-shrink:0;
-            "></span>
-            <span style="font-size:0.72rem; font-weight:600; color:#c4b5fd; letter-spacing:0.08em; text-transform:uppercase;" id="analysingText">
-              <span id="analysingLabel">Analysing</span><span id="dots"></span>
-            </span>
+        <!-- Quick stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val" style="
+              {% if prediction.color == 'success' %}color:#34d399;
+              {% elif prediction.color == 'warning' %}color:#fbbf24;
+              {% else %}color:#f87171;{% endif %}
+            ">{{ prediction.walking_score }}%</div>
+            <div class="stat-lbl">Walk Quality</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:#7dd3fc;">{{ prediction.confidence | default(85) }}%</div>
+            <div class="stat-lbl">Confidence</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:#a78bfa;">{{ prediction.detection_rate | default(0) }}%</div>
+            <div class="stat-lbl">Detection</div>
           </div>
         </div>
 
-        <!-- Radar Chart -->
-        <div class="section-title mb-2">
-          <div class="title-icon"><i class="fa-solid fa-chart-radar" style="font-size:0.8rem;"></i></div>
+        <!-- Radar chart -->
+        <div class="section-label">
+          <span class="section-label-icon"><i class="fa-solid fa-circle-nodes"></i></span>
           Metric Radar
         </div>
-        <div style="position:relative; height:240px; display:flex; align-items:center; justify-content:center;">
+
+        <div class="chart-wrap">
           <canvas id="radarChart"></canvas>
         </div>
 
+        <div class="divider"></div>
+
         <!-- Legend -->
-        <div class="divider mt-3"></div>
-        <div style="font-size:0.72rem; color:#6b6891; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:10px;">Quality Legend</div>
-        <div class="d-flex flex-column gap-2">
-          <div class="d-flex align-items-center gap-2">
-            <div style="width:10px;height:10px;border-radius:3px;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,0.5);flex-shrink:0;"></div>
-            <span style="font-size:0.77rem;color:#a8a3cc;"><strong style="color:#34d399;">65–100</strong> — Normal / Healthy Gait</span>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.5);"></div>
+            <span><strong style="color:#4ade80;">65–100</strong> — Normal / Healthy Gait</span>
           </div>
-          <div class="d-flex align-items-center gap-2">
-            <div style="width:10px;height:10px;border-radius:3px;background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,0.5);flex-shrink:0;"></div>
-            <span style="font-size:0.77rem;color:#a8a3cc;"><strong style="color:#fbbf24;">40–64</strong> — Mild Irregularities</span>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,0.5);"></div>
+            <span><strong style="color:#fbbf24;">40–64</strong> — Mild Irregularities</span>
           </div>
-          <div class="d-flex align-items-center gap-2">
-            <div style="width:10px;height:10px;border-radius:3px;background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,0.5);flex-shrink:0;"></div>
-            <span style="font-size:0.77rem;color:#a8a3cc;"><strong style="color:#f87171;">0–39</strong> — Significant Deviation</span>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,0.5);"></div>
+            <span><strong style="color:#f87171;">0–39</strong> — Significant Deviation</span>
           </div>
         </div>
 
-      </div><!-- /glass-card -->
+      </div>
     </div>
 
-  </div><!-- /row -->
-</div><!-- /container -->
+  </div>
+</div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- ================================================================
-     JavaScript — ring, bars, chart
-     ================================================================ -->
 <script>
-  /* ----------------------------------------------------------------
-     Raw metric values from Jinja
-     ---------------------------------------------------------------- */
   const METRICS = {
-    spine:          {{ prediction.metrics.spine | default(0) }},
-    shoulder:       {{ prediction.metrics.shoulder | default(0) }},
-    hip:            {{ prediction.metrics.hip | default(0) }},
-    head:           {{ prediction.metrics.head | default(0) }},
-    step_symmetry:  {{ prediction.metrics.step_symmetry | default(0) }}
+    spine:          {{ prediction.metrics.spine          | default(0) }},
+    shoulder:       {{ prediction.metrics.shoulder       | default(0) }},
+    hip:            {{ prediction.metrics.hip            | default(0) }},
+    head:           {{ prediction.metrics.head           | default(0) }},
+    step_symmetry:  {{ prediction.metrics.step_symmetry  | default(0) }},
+    balance:        {{ prediction.metrics.balance        | default(0) }},
+    trunk_sway:     {{ prediction.metrics.trunk_sway     | default(0) }},
+    arm_swing:      {{ prediction.metrics.arm_swing      | default(0) }},
+    knee_flex:      {{ prediction.metrics.knee_flex      | default(0) }},
+    cadence:        {{ prediction.metrics.cadence        | default(0) }},
   };
   const WALKING_SCORE = {{ prediction.walking_score | default(0) }};
   const RISK_SCORE    = {{ prediction.score | default(0) }};
+  const PRED_COLOR    = "{{ prediction.color }}";
 
-  /* ----------------------------------------------------------------
-     Determine fill class for a metric value
-     ---------------------------------------------------------------- */
-  function fillClass(val) {
-    if (val >= 65) return 'fill-good';
-    if (val >= 40) return 'fill-medium';
-    return 'fill-bad';
-  }
-
-  /* ----------------------------------------------------------------
-     Animate the SVG ring
-     ---------------------------------------------------------------- */
+  /* ── Ring ── */
   function animateRing(score) {
-    const el  = document.getElementById('ringFillEl');
-    const num = document.getElementById('ringNumber');
-    const circ = 440;
+    const fill = document.getElementById('ringFill');
+    const num  = document.getElementById('ringNum');
+    const circ = 452;
     const offset = circ - (score / 100) * circ;
 
-    // Ring color
-    if (score >= 65)      el.setAttribute('stroke', '#10b981');
-    else if (score >= 40) el.setAttribute('stroke', '#f59e0b');
-    else                  el.setAttribute('stroke', '#ef4444');
+    const color = score >= 65 ? '#22c55e' : score >= 40 ? '#f59e0b' : '#ef4444';
+    fill.setAttribute('stroke', color);
+    num.style.color = color;
 
-    // Animate offset
     requestAnimationFrame(() => {
-      el.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.23,1,0.32,1)';
-      el.setAttribute('stroke-dashoffset', offset);
+      fill.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(0.22,1,0.36,1)';
+      fill.setAttribute('stroke-dashoffset', offset);
     });
 
-    // Count-up number
-    let current = 0;
-    const step = score / 60;
-    const timer = setInterval(() => {
-      current = Math.min(current + step, score);
-      num.textContent = Math.round(current);
-      if (current >= score) clearInterval(timer);
-    }, 16);
+    let curr = 0;
+    const step = score / 70;
+    const t = setInterval(() => {
+      curr = Math.min(curr + step, score);
+      num.textContent = Math.round(curr);
+      if (curr >= score) clearInterval(t);
+    }, 14);
   }
 
-  /* ----------------------------------------------------------------
-     Animate metric bars
-     ---------------------------------------------------------------- */
-  function animateBar(fillId, valId, value) {
-    const fill = document.getElementById(fillId);
-    const val  = document.getElementById(valId);
-
-    fill.classList.add(fillClass(value));
-
-    setTimeout(() => {
-      fill.style.width = value + '%';
-    }, 100);
-
-    let current = 0;
-    const step = value / 50;
-    const timer = setInterval(() => {
-      current = Math.min(current + step, value);
-      val.textContent = Math.round(current);
-      if (current >= value) clearInterval(timer);
-    }, 20);
-  }
-
-  /* ----------------------------------------------------------------
-     Animate risk progress bar
-     ---------------------------------------------------------------- */
+  /* ── Risk bar ── */
   function animateRisk(score) {
-    const el = document.getElementById('riskFillEl');
     setTimeout(() => {
-      el.style.width = score + '%';
-    }, 150);
+      document.getElementById('riskFill').style.width = score + '%';
+    }, 180);
   }
 
-  /* ----------------------------------------------------------------
-     Chart.js — Radar
-     ---------------------------------------------------------------- */
-  function buildRadarChart() {
+  /* ── Metric bars ── */
+  const METRIC_MAP = [
+    ['mSpineVal',    'mSpineFill',    METRICS.spine],
+    ['mShoulderVal', 'mShoulderFill', METRICS.shoulder],
+    ['mHipVal',      'mHipFill',      METRICS.hip],
+    ['mHeadVal',     'mHeadFill',     METRICS.head],
+    ['mStepVal',     'mStepFill',     METRICS.step_symmetry],
+    ['mBalanceVal',  'mBalanceFill',  METRICS.balance],
+    ['mTrunkVal',    'mTrunkFill',    METRICS.trunk_sway],
+    ['mArmVal',      'mArmFill',      METRICS.arm_swing],
+    ['mKneeVal',     'mKneeFill',     METRICS.knee_flex],
+    ['mCadenceVal',  'mCadenceFill',  METRICS.cadence],
+  ];
+
+  function fillClass(v) {
+    return v >= 65 ? 'mf-good' : v >= 40 ? 'mf-medium' : 'mf-bad';
+  }
+
+  function animateBar(valId, fillId, value) {
+    const fillEl = document.getElementById(fillId);
+    const valEl  = document.getElementById(valId);
+    if (!fillEl || !valEl) return;
+
+    fillEl.classList.add(fillClass(value));
+    setTimeout(() => { fillEl.style.width = value + '%'; }, 100);
+
+    let curr = 0;
+    const step = value / 55;
+    const t = setInterval(() => {
+      curr = Math.min(curr + step, value);
+      valEl.textContent = Math.round(curr);
+      if (curr >= value) clearInterval(t);
+    }, 18);
+  }
+
+  /* ── Radar chart ── */
+  function buildRadar() {
     const ctx = document.getElementById('radarChart').getContext('2d');
+    const color = PRED_COLOR === 'success' ? 'rgba(34,197,94,' : PRED_COLOR === 'warning' ? 'rgba(245,158,11,' : 'rgba(239,68,68,';
 
     new Chart(ctx, {
       type: 'radar',
       data: {
-        labels: ['Spine', 'Shoulder', 'Hip', 'Head', 'Step Sym.'],
+        labels: ['Spine','Shoulder','Hip','Head','Step','Balance','Trunk','Arms','Knee','Cadence'],
         datasets: [{
           label: 'Gait Score',
           data: [
-            METRICS.spine,
-            METRICS.shoulder,
-            METRICS.hip,
-            METRICS.head,
-            METRICS.step_symmetry
+            METRICS.spine, METRICS.shoulder, METRICS.hip, METRICS.head,
+            METRICS.step_symmetry, METRICS.balance, METRICS.trunk_sway,
+            METRICS.arm_swing, METRICS.knee_flex, METRICS.cadence
           ],
-          backgroundColor:   'rgba(124, 58, 237, 0.18)',
-          borderColor:       'rgba(167, 139, 250, 0.85)',
-          pointBackgroundColor: '#a78bfa',
-          pointBorderColor:     '#7c3aed',
-          pointRadius:          4,
-          borderWidth:          2,
-          fill: true
+          backgroundColor:      color + '0.15)',
+          borderColor:          color + '0.82)',
+          pointBackgroundColor: color + '0.9)',
+          pointBorderColor:     color + '0.6)',
+          pointRadius: 4,
+          borderWidth: 2,
+          fill: true,
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 1200, easing: 'easeInOutQuart' },
+        animation: { duration: 1300, easing: 'easeInOutQuart' },
         scales: {
           r: {
-            min: 0,
-            max: 100,
+            min: 0, max: 100,
             ticks: {
               stepSize: 25,
-              color: '#6b6891',
-              font: { size: 9 },
+              color: '#4a5578',
+              font: { size: 8 },
               backdropColor: 'transparent'
             },
-            grid: {
-              color: 'rgba(255,255,255,0.07)'
-            },
-            angleLines: {
-              color: 'rgba(255,255,255,0.07)'
-            },
-            pointLabels: {
-              color: '#a8a3cc',
-              font: { size: 11, weight: '600', family: "'Inter', sans-serif" }
-            }
+            grid:        { color: 'rgba(255,255,255,0.06)' },
+            angleLines:  { color: 'rgba(255,255,255,0.06)' },
+            pointLabels: { color: '#7a95c8', font: { size: 9, weight: '700' } }
           }
         },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: 'rgba(17,17,43,0.95)',
-            borderColor: 'rgba(124,58,237,0.40)',
+            backgroundColor: 'rgba(3,9,20,0.95)',
+            borderColor: 'rgba(56,189,248,0.3)',
             borderWidth: 1,
-            titleColor: '#e0d7ff',
-            bodyColor: '#a8a3cc',
+            titleColor: '#e0f2fe',
+            bodyColor: '#7a95c8',
             padding: 10
           }
         }
@@ -533,78 +988,39 @@
     });
   }
 
-  /* ----------------------------------------------------------------
-     Analysing → Analysed transition
-     ---------------------------------------------------------------- */
+  /* ── Scan line → "Analysed ✓" ── */
   (function() {
-    const dotsEl    = document.getElementById('dots');
-    const textEl    = document.getElementById('analysingText');
-    const scanLine  = document.getElementById('scanLine');
-    const dot       = textEl ? textEl.querySelector('span') : null;
+    const dotsEl   = document.getElementById('scanDots');
+    const textEl   = document.getElementById('scanText');
+    const scanLine = document.getElementById('scanLine');
+    const dotEl    = document.getElementById('scanDot');
     if (!dotsEl || !textEl) return;
 
-    // Animate dots while analysing
     let n = 0;
-    const dotsTimer = setInterval(() => {
-      n = (n + 1) % 4;
-      dotsEl.textContent = '.'.repeat(n);
-    }, 450);
+    const dt = setInterval(() => { n = (n+1)%4; dotsEl.textContent = '.'.repeat(n); }, 420);
 
-    // After 3s switch to "Analysed ✓"
     setTimeout(() => {
-      clearInterval(dotsTimer);
+      clearInterval(dt);
+      if (scanLine) { scanLine.style.transition = 'opacity 0.5s'; scanLine.style.opacity = '0'; setTimeout(() => { scanLine.style.display = 'none'; }, 500); }
 
-      // Fade out scanning line
-      if (scanLine) {
-        scanLine.style.transition = 'opacity 0.6s ease';
-        scanLine.style.opacity = '0';
-        setTimeout(() => { scanLine.style.display = 'none'; }, 600);
-      }
-
-      // Update text with fade
-      textEl.style.transition = 'opacity 0.4s ease';
+      textEl.style.transition = 'opacity 0.35s';
       textEl.style.opacity = '0';
       setTimeout(() => {
-        // Switch text to "Analysed ✓"
-        document.getElementById('analysingLabel').textContent = 'Analysed';
-        dotsEl.textContent = ' ✓';
-        dotsEl.style.color = '#34d399';
-
-        // Pulse dot → green
-        if (dot) {
-          dot.style.background = '#10b981';
-          dot.style.boxShadow  = '0 0 8px #10b981';
-          dot.style.animation  = 'none';
-        }
+        document.getElementById('scanText').innerHTML = 'Analysed <span style="color:#4ade80;">✓</span>';
         textEl.style.color = '#6ee7b7';
         textEl.style.opacity = '1';
-
-        // Update pill border to green
-        const pill = textEl.closest('div');
-        if (pill) {
-          pill.style.transition  = 'border-color 0.5s ease';
-          pill.style.borderColor = 'rgba(16,185,129,0.45)';
-        }
-      }, 400);
-    }, 3000);
+        if (dotEl) { dotEl.style.background = '#22c55e'; dotEl.style.boxShadow = '0 0 8px #22c55e'; dotEl.style.animation = 'none'; }
+      }, 350);
+    }, 3200);
   })();
 
-  /* ----------------------------------------------------------------
-     Boot animations on DOM ready
-     ---------------------------------------------------------------- */
-  document.addEventListener('DOMContentLoaded', function () {
+  /* ── Boot ── */
+  document.addEventListener('DOMContentLoaded', () => {
     animateRing(WALKING_SCORE);
     animateRisk(RISK_SCORE);
-
-    animateBar('mFillSpine',    'mValSpine',    METRICS.spine);
-    animateBar('mFillShoulder', 'mValShoulder', METRICS.shoulder);
-    animateBar('mFillHip',      'mValHip',      METRICS.hip);
-    animateBar('mFillHead',     'mValHead',     METRICS.head);
-    animateBar('mFillStep',     'mValStep',     METRICS.step_symmetry);
-
-    buildRadarChart();
+    METRIC_MAP.forEach(([v, f, val]) => animateBar(v, f, val));
+    buildRadar();
   });
 </script>
-
 </body>
 </html>

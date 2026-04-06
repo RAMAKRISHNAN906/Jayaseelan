@@ -11,3 +11,6 @@ app/static/processed/
 *.log
 .tmp/
 .claude/
+
+serviceAccountKey.json
+start.bat

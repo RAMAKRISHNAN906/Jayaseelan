@@ -5,7 +5,6 @@ import os
 import threading
 import time
 import traceback
-import uuid
 from datetime import datetime
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -106,7 +105,8 @@ def _safe_upload_filename(original_filename, video_sha256):
 
 
 def _run_prediction_job(job_id, user_id, task_type, original_filename, video_bytes):
-    _set_job_fields(job_id, status="processing")
+    _set_job_fields(job_id, status="processing", progress=5, step="Preparing video…")
+    print(f"[PredictJob] {job_id[:8]} started for user {user_id}")
 
     try:
         video_sha256 = hashlib.sha256(video_bytes).hexdigest()
@@ -117,9 +117,12 @@ def _run_prediction_job(job_id, user_id, task_type, original_filename, video_byt
             cached = _prediction_cache.get(cache_key)
 
         if cached:
+            print(f"[PredictJob] {job_id[:8]} served from cache")
             _set_job_fields(
                 job_id,
                 status="done",
+                progress=100,
+                step="Complete",
                 result={
                     "prediction": cached["prediction"],
                     "task_type": task_type,
@@ -136,12 +139,23 @@ def _run_prediction_job(job_id, user_id, task_type, original_filename, video_byt
         with open(video_path, 'wb') as f:
             f.write(video_bytes)
 
+        _set_job_fields(job_id, progress=15, step="Reading video frames…")
+        print(f"[PredictJob] {job_id[:8]} extracting frames…")
+
         # Pass the already-computed hash to skip re-reading the file for hashing.
         processed_frames, walking_quality, _ = process_video(video_path, file_hash_hex=video_sha256)
+        print(f"[PredictJob] {job_id[:8]} frames done — walking_quality={walking_quality.get('overall')}")
+
+        _set_job_fields(job_id, progress=60, step="Scoring biomechanics…")
         debug_frames = save_debug_frames(processed_frames, video_hash=video_sha256)
 
+        _set_job_fields(job_id, progress=75, step="Running risk model…")
+        print(f"[PredictJob] {job_id[:8]} running CNN…")
         model = load_dementia_model()
         prediction = predict_risk(model, processed_frames, task_type, walking_quality)
+        print(f"[PredictJob] {job_id[:8]} prediction={prediction.get('level')} score={prediction.get('score')}")
+
+        _set_job_fields(job_id, progress=90, step="Saving results…")
 
         with _prediction_cache_lock:
             _prediction_cache[cache_key] = {
@@ -164,6 +178,8 @@ def _run_prediction_job(job_id, user_id, task_type, original_filename, video_byt
         _set_job_fields(
             job_id,
             status="done",
+            progress=100,
+            step="Complete",
             result={
                 "prediction": prediction,
                 "task_type": task_type,
@@ -172,12 +188,15 @@ def _run_prediction_job(job_id, user_id, task_type, original_filename, video_byt
             },
             error=None,
         )
+        print(f"[PredictJob] {job_id[:8]} DONE")
     except Exception as exc:
         print(f"[PredictJob] Job {job_id} failed: {exc}")
         traceback.print_exc()
         _set_job_fields(
             job_id,
             status="error",
+            progress=0,
+            step="Failed",
             error=f"Video extraction failed: {exc}",
         )
 
@@ -338,118 +357,131 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', user=current_user)
+    return redirect(url_for('dashboard_recall'))
+
+
+@app.route('/technology')
+@login_required
+def dashboard_technology():
+    return render_template('dashboard.html', user=current_user, active_tab='technology')
+
+
+@app.route('/clinical-data')
+@login_required
+def dashboard_clinical():
+    return render_template('dashboard.html', user=current_user, active_tab='clinical')
+
+
+@app.route('/gait-analysis')
+@login_required
+def dashboard_gait():
+    return render_template('dashboard.html', user=current_user, active_tab='gait')
+
+
+@app.route('/recall-iq')
+@login_required
+def dashboard_recall():
+    return render_template('dashboard.html', user=current_user, active_tab='recall')
+
+
+@app.route('/feedback')
+@login_required
+def dashboard_feedback():
+    return render_template('dashboard.html', user=current_user, active_tab='feedback')
 
 
 @app.route('/predict', methods=['POST'])
 @login_required
 def predict():
+    """Synchronous prediction — processes the video on the request thread.
+    No background jobs, no polling, no threading issues.
+    The browser waits ~15-30 s then redirects straight to results."""
     task_type = (request.form.get('task_type') or 'single').strip().lower()
     if task_type not in ('single', 'dual'):
         task_type = 'single'
 
     video_file = request.files.get('video')
     if not video_file:
-        flash("No video uploaded")
-        return redirect(url_for('dashboard'))
+        flash("No video file received. Please select a file and try again.")
+        return redirect(url_for('dashboard_clinical'))
 
     video_bytes = video_file.read()
     if not video_bytes:
-        flash("Uploaded video is empty. Please upload a valid file.")
-        return redirect(url_for('dashboard'))
+        flash("Uploaded video is empty. Please upload a valid video file.")
+        return redirect(url_for('dashboard_clinical'))
 
-    _cleanup_old_jobs()
-    job_id = uuid.uuid4().hex
-    now = _now_iso()
     file_name = video_file.filename or "uploaded_video.mp4"
+    print(f"[Predict] Starting sync processing: {file_name} ({len(video_bytes)//1024} KB), task={task_type}")
 
-    with _background_jobs_lock:
-        _background_jobs[job_id] = {
-            "id": job_id,
-            "user_id": current_user.id,
-            "status": "queued",
-            "task_type": task_type,
-            "file_name": file_name,
-            "result": None,
-            "error": None,
-            "created_at": now,
-            "updated_at": now,
-            "updated_ts": time.time(),
-        }
+    try:
+        video_sha256 = hashlib.sha256(video_bytes).hexdigest()
+        cache_key = f"{video_sha256}_{task_type}"
+        video_url = _build_video_url(video_bytes, video_sha256, file_name)
 
-    worker = threading.Thread(
-        target=_run_prediction_job,
-        args=(job_id, current_user.id, task_type, file_name, video_bytes),
-        daemon=True,
-        name=f"predict-{job_id[:8]}",
-    )
-    worker.start()
+        with _prediction_cache_lock:
+            cached = _prediction_cache.get(cache_key)
 
-    return render_template(
-        'processing.html',
-        job_id=job_id,
-        task_type=task_type,
-        file_name=file_name,
-    )
+        if cached:
+            print(f"[Predict] Served from cache: {cache_key[:20]}")
+            return render_template(
+                'results.html',
+                prediction=cached["prediction"],
+                task_type=task_type,
+                debug_frames=cached["debug_frames"],
+                video_url=video_url,
+            )
 
+        os.makedirs('uploads', exist_ok=True)
+        upload_filename = _safe_upload_filename(file_name, video_sha256)
+        video_path = os.path.join('uploads', upload_filename)
+        with open(video_path, 'wb') as f:
+            f.write(video_bytes)
 
-@app.route('/predict_status/<job_id>')
-@login_required
-def predict_status(job_id):
-    _cleanup_old_jobs()
-    job = _get_user_job(job_id, current_user.id)
-    if not job:
-        return jsonify({"success": False, "message": "Job not found or expired."}), 404
+        print(f"[Predict] Extracting frames from {video_path}")
+        processed_frames, walking_quality, _ = process_video(video_path, file_hash_hex=video_sha256)
+        print(f"[Predict] Frames done. walking_quality overall={walking_quality.get('overall')}")
 
-    payload = {
-        "success": True,
-        "status": job.get("status"),
-        "updated_at": job.get("updated_at"),
-    }
+        debug_frames = save_debug_frames(processed_frames, video_hash=video_sha256)
 
-    if job.get("status") == "done":
-        payload["result_url"] = url_for('predict_result', job_id=job_id)
-    elif job.get("status") == "error":
-        payload["error"] = job.get("error") or "Video extraction failed."
+        print(f"[Predict] Running CNN model…")
+        model = load_dementia_model()
+        prediction = predict_risk(model, processed_frames, task_type, walking_quality)
+        print(f"[Predict] Prediction: level={prediction.get('level')}, score={prediction.get('score')}")
 
-    return jsonify(payload)
+        with _prediction_cache_lock:
+            _prediction_cache[cache_key] = {
+                "prediction": prediction,
+                "debug_frames": debug_frames,
+            }
 
+        # Fire-and-forget Firebase write — never block the response
+        def _fb_write(uid, tt, pred):
+            try:
+                ref = db.reference(f'results/{uid}')
+                ref.push({
+                    'task_type': tt,
+                    'risk_score': pred['score'],
+                    'risk_level': pred['level'],
+                    'timestamp': str(np.datetime64('now')),
+                })
+            except Exception:
+                pass
+        threading.Thread(target=_fb_write, args=(current_user.id, task_type, prediction), daemon=True).start()
 
-@app.route('/predict_result/<job_id>')
-@login_required
-def predict_result(job_id):
-    _cleanup_old_jobs()
-    job = _get_user_job(job_id, current_user.id)
-    if not job:
-        flash("Result not found or expired. Please upload again.")
-        return redirect(url_for('dashboard'))
-
-    status = job.get("status")
-    if status in ("queued", "processing"):
+        print(f"[Predict] Done — rendering results.")
         return render_template(
-            'processing.html',
-            job_id=job_id,
-            task_type=job.get("task_type", "single"),
-            file_name=job.get("file_name", "uploaded_video.mp4"),
+            'results.html',
+            prediction=prediction,
+            task_type=task_type,
+            debug_frames=debug_frames,
+            video_url=video_url,
         )
 
-    if status == "error":
-        flash(job.get("error") or "Video extraction failed.")
-        return redirect(url_for('dashboard'))
-
-    result = job.get("result") or {}
-    prediction = result.get("prediction")
-    if not prediction:
-        flash("Result payload is unavailable. Please upload again.")
-        return redirect(url_for('dashboard'))
-
-    return render_template(
-        'results.html',
-        prediction=prediction,
-        task_type=result.get("task_type", "single"),
-        debug_frames=result.get("debug_frames", []),
-        video_url=result.get("video_url"),
-    )
+    except Exception as exc:
+        print(f"[Predict] ERROR: {exc}")
+        traceback.print_exc()
+        flash(f"Processing failed: {exc}")
+        return redirect(url_for('dashboard_clinical'))
 
 
 @app.route('/memory_test')
@@ -493,5 +525,6 @@ if __name__ == '__main__':
     if not os.path.exists('uploads'):
         os.makedirs('uploads')
     port = int(os.environ.get('PORT', 5001))
-    debug = os.environ.get('RAILWAY_ENVIRONMENT') is None
-    app.run(debug=debug, host='0.0.0.0', port=port)
+    # use_reloader=False is critical — the reloader spawns a child process and
+    # kills background threads (video processing jobs), causing silent failures.
+    app.run(debug=True, host='0.0.0.0', port=port, use_reloader=False)

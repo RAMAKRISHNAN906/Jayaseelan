@@ -1,286 +1,1082 @@
+﻿
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GaitAnalysis Pro — Memory Test</title>
+  <title>NeuroCare Memory Test</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+
   <style>
-    .question-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 24px 28px;
-      transition: border-color 0.25s ease, background 0.25s ease;
-    }
-    .question-card.correct  { border-color: rgba(16,185,129,0.55); background: rgba(16,185,129,0.06); }
-    .question-card.wrong    { border-color: rgba(239,68,68,0.55);  background: rgba(239,68,68,0.06);  }
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
 
-    .word-display {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: 0.18em;
-      background: linear-gradient(120deg, #e0d7ff, #a78bfa);
+    :root {
+      --bg: #030a19;
+      --line: rgba(140,172,224,0.15);
+      --text: #ecf4ff;
+      --muted: #7a95c8;
+      --accent: #38bdf8;
+      --accent2: #14b8a6;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background: var(--bg);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 48% at 10% -8%, rgba(56,189,248,0.17), transparent 65%),
+        radial-gradient(ellipse 65% 42% at 92% 4%,  rgba(20,184,166,0.13), transparent 60%),
+        radial-gradient(ellipse 58% 48% at 50% 108%, rgba(168,85,247,0.08), transparent 65%);
+      animation: memAurora 22s ease-in-out infinite alternate;
+    }
+
+    @keyframes memAurora {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(-12px,10px) scale(1.015); }
+    }
+
+    .memory-shell::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(126,157,210,0.042) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126,157,210,0.035) 1px, transparent 1px);
+      background-size: 58px 58px;
+      mask-image: radial-gradient(ellipse 82% 72% at center, black 20%, transparent 70%);
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 150;
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      background: rgba(3,9,20,0.82);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 4px 28px rgba(0,0,0,0.38);
+    }
+
+    .topbar-row {
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 10px 0;
+    }
+
+    .brand {
+      text-decoration: none;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0ea5e9, #0f766e);
+      color: #fff;
+      font-size: 1rem;
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.4), 0 8px 22px rgba(14,165,233,0.3);
+      animation: iconGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes iconGlow {
+      from { box-shadow: 0 0 0 1px rgba(14,165,233,0.38), 0 8px 20px rgba(14,165,233,0.28); }
+      to   { box-shadow: 0 0 0 1px rgba(14,165,233,0.6),  0 8px 28px rgba(14,165,233,0.48), 0 0 40px rgba(14,165,233,0.16); }
+    }
+
+    .brand-name {
+      font-size: 1.05rem;
+      background: linear-gradient(90deg, #e0f2fe, #99f6e4);
       -webkit-background-clip: text;
-      background-clip: text;
       -webkit-text-fill-color: transparent;
-      user-select: none;
+      background-clip: text;
     }
 
-    .answer-input {
-      background: rgba(255,255,255,0.05) !important;
-      border: 1px solid rgba(255,255,255,0.12) !important;
-      border-radius: 10px !important;
-      color: #f1f0ff !important;
-      font-family: 'Space Grotesk', monospace;
-      font-size: 1.1rem;
-      letter-spacing: 0.12em;
-      padding: 10px 16px;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.2s;
+    .brand small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.59rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      -webkit-text-fill-color: var(--muted);
     }
-    .answer-input:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.22) !important; }
-    .answer-input:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .feedback-tag {
+    .top-actions { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .lang-switch {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(6,14,32,0.72);
+      padding: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      backdrop-filter: blur(8px);
+    }
+
+    .lang-btn {
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 6px 12px;
+      min-width: 42px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(120deg, #7dd3fc, #2dd4bf);
+      color: #031e2e;
+      box-shadow: 0 4px 14px rgba(56,189,248,0.32);
+    }
+
+    .pill, .btn-top {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(6,14,32,0.72);
+      color: var(--muted);
+      font-size: 0.71rem;
+      font-weight: 700;
+      padding: 7px 13px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 4px 14px;
-      border-radius: 99px;
-      letter-spacing: 0.04em;
-      margin-top: 8px;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
     }
-    .feedback-tag.correct { background: rgba(16,185,129,0.18); color: #10b981; }
-    .feedback-tag.wrong   { background: rgba(239,68,68,0.15);  color: #ef4444; }
 
-    .score-ring {
+    .pill { color: #d8e6ff; max-width: 220px; }
+    .pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; display: inline-block; }
+
+    .btn-top:hover { color: #ffe3b0; border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.1); transform: translateX(-1px); }
+
+    /* ── PANELS ── */
+    .memory-main { position: relative; z-index: 1; }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(158deg, rgba(7,16,37,0.96), rgba(5,11,27,0.9));
+      box-shadow: 0 22px 52px rgba(1,6,18,0.6), 0 1px 0 rgba(125,211,252,0.08) inset;
       position: relative;
-      width: 120px; height: 120px;
-      margin: 0 auto 12px;
+      overflow: hidden;
+      backdrop-filter: blur(14px);
     }
-    .score-ring svg { transform: rotate(-90deg); }
-    .score-inner {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    .score-number { font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:800; color:#f1f0ff; line-height:1; }
-    .score-label  { font-size:0.65rem; color:#8f89ba; text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
 
-    .hint-text {
-      font-size: 0.78rem;
-      color: #6b6891;
-      margin-top: 6px;
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(125,211,252,0.5) 35%, rgba(45,212,191,0.42) 65%, transparent);
     }
-    .hint-text span { color: #a78bfa; font-family: monospace; letter-spacing: 0.1em; }
+
+    .panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      pointer-events: none;
+      background: radial-gradient(ellipse 60% 36% at 50% -14%, rgba(56,189,248,0.05), transparent 62%);
+    }
+
+    /* ── HERO ── */
+    .hero { padding: 32px; }
+
+    .hero-icon {
+      width: 62px; height: 62px;
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(56,189,248,0.28), rgba(20,184,166,0.24));
+      border: 1px solid rgba(56,189,248,0.3);
+      color: #7dd3fc;
+      font-size: 1.6rem;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 26px rgba(56,189,248,0.18);
+      animation: heroFloat 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroFloat {
+      from { transform: translateY(0);    box-shadow: 0 8px 26px rgba(56,189,248,0.18); }
+      to   { transform: translateY(-4px); box-shadow: 0 14px 38px rgba(56,189,248,0.34); }
+    }
+
+    .hero-badge {
+      margin: 0 0 10px;
+      color: #5eadd6;
+      font-size: 0.67rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(1.5rem, 2.1vw, 2.1rem);
+      line-height: 1.26;
+      background: linear-gradient(118deg, #f0f9ff 10%, #bae6fd 50%, #99f6e4 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.72;
+      max-width: 720px;
+    }
+
+    /* ── MODE SWITCH ── */
+    .mode-switch {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .mode-btn {
+      border: 1px solid rgba(140,172,224,0.16);
+      border-radius: 15px;
+      background: rgba(6,14,32,0.72);
+      color: var(--muted);
+      min-height: 58px;
+      font-size: 0.81rem;
+      font-weight: 700;
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.24s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mode-btn i { font-size: 1.1rem; }
+
+    .mode-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 15px;
+      opacity: 0;
+      background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(56,189,248,0.1), transparent);
+      transition: opacity 0.28s;
+    }
+
+    .mode-btn:hover { border-color: rgba(56,189,248,0.3); color: #c8e8ff; transform: translateY(-2px); }
+    .mode-btn:hover::after { opacity: 1; }
+
+    .mode-btn.active {
+      color: #031e2e;
+      border-color: rgba(45,212,191,0.55);
+      background: linear-gradient(120deg, #7dd3fc, #2dd4bf);
+      box-shadow: 0 8px 22px rgba(45,212,191,0.34), 0 0 0 1px rgba(125,211,252,0.22);
+    }
+
+    .mode-btn.active::after { opacity: 0; }
+
+    /* ── PANEL BODY ── */
+    .panel-body { padding: 26px; }
+
+    .section-title {
+      margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: 1.15rem;
+      background: linear-gradient(118deg, #dbeafe, #a5f3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-sub {
+      margin-top: 7px;
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.64;
+    }
+
+    /* ── QUESTION CARD ── */
+    .question {
+      margin-top: 16px;
+      border: 1px solid rgba(140,172,224,0.16);
+      border-radius: 18px;
+      background: rgba(5,13,30,0.72);
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .question::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(56,189,248,0.3), transparent);
+    }
+
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #4a6fa5;
+      margin-bottom: 12px;
+    }
+
+    .question-header-icon {
+      width: 24px; height: 24px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(56,189,248,0.14);
+      color: #7dd3fc;
+      font-size: 0.65rem;
+      border: 1px solid rgba(56,189,248,0.16);
+    }
+
+    .prompt {
+      margin: 0;
+      font-size: 1.25rem;
+      font-family: 'Sora', sans-serif;
+      letter-spacing: 0.06em;
+      color: #eaf4ff;
+    }
+
+    /* ── INPUTS ── */
+    .answer-input {
+      margin-top: 12px;
+      width: 100%;
+      border: 1px solid rgba(140,172,224,0.18);
+      border-radius: 12px;
+      min-height: 46px;
+      padding: 10px 14px;
+      color: var(--text);
+      background: rgba(4,10,26,0.84);
+      font-size: 0.9rem;
+      font-weight: 600;
+      outline: none;
+      font-family: 'Manrope', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .answer-input:focus {
+      border-color: rgba(56,189,248,0.55);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.13), 0 0 16px rgba(56,189,248,0.06);
+    }
+
+    .answer-input::placeholder { color: rgba(122,149,200,0.38); }
+
+    /* ── CHOICE GRID ── */
+    .choice-grid { margin-top: 12px; display: grid; gap: 8px; }
+
+    .choice-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(140,172,224,0.16);
+      border-radius: 13px;
+      padding: 11px 14px;
+      background: rgba(5,13,30,0.62);
+      font-size: 0.88rem;
+      color: #dde9ff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .choice-item:hover { border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.06); }
+    .choice-item.selected { border-color: rgba(45,212,191,0.5); background: rgba(45,212,191,0.1); }
+
+    /* ── IMAGE GRID ── */
+    .icon-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+    }
+
+    .icon-card {
+      border: 1px solid rgba(140,172,224,0.18);
+      border-radius: 16px;
+      min-height: 130px;
+      background: rgba(5,13,30,0.75);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 6px;
+      color: #dbe8ff;
+      font-size: 0.76rem;
+      font-weight: 700;
+      transition: all 0.24s ease;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .icon-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      opacity: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(56,189,248,0.08), transparent);
+      transition: opacity 0.28s;
+    }
+
+    .icon-card:hover {
+      border-color: rgba(56,189,248,0.32);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 26px rgba(1,8,22,0.55);
+    }
+
+    .icon-card:hover::after { opacity: 1; }
+
+    .icon-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 12px;
+      display: block;
+      border: 1px solid rgba(56,189,248,0.1);
+      transition: transform 0.24s;
+    }
+
+    .icon-card:hover img { transform: scale(1.04); }
+
+    .icon-card i { font-size: 1.4rem; color: #7dd3fc; }
+
+    .icon-card span {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .icon-card.selected {
+      border-color: rgba(45,212,191,0.65);
+      background: rgba(45,212,191,0.12);
+      box-shadow: 0 0 0 2px rgba(45,212,191,0.22), 0 10px 24px rgba(1,8,22,0.5);
+    }
+
+    .icon-card.selected::before {
+      content: '✓';
+      position: absolute;
+      top: 8px; right: 10px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #2dd4bf;
+      text-shadow: 0 0 8px rgba(45,212,191,0.7);
+    }
+
+    /* ── BUTTONS ── */
+    .action-row { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .btn-main, .btn-sub {
+      min-height: 46px;
+      border-radius: 13px;
+      font-size: 0.87rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      text-decoration: none;
+      transition: all 0.22s ease;
+      cursor: pointer;
+    }
+
+    .btn-main {
+      border: none;
+      color: #031e2e;
+      background: linear-gradient(120deg, #7dd3fc, #2dd4bf);
+      box-shadow: 0 8px 26px rgba(45,212,191,0.32);
+    }
+
+    .btn-main:hover { color: #031e2e; transform: translateY(-2px); box-shadow: 0 12px 34px rgba(45,212,191,0.48); }
+
+    .btn-sub {
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: rgba(6,14,34,0.72);
+    }
+
+    .btn-sub:hover { color: #e2f6ff; border-color: rgba(56,189,248,0.36); background: rgba(56,189,248,0.08); transform: translateY(-1px); }
+
+    /* ── RESULT BOX ── */
+    .result-box {
+      margin-top: 20px;
+      border-radius: 18px;
+      border: 1px solid rgba(140,172,224,0.16);
+      background: rgba(4,12,28,0.72);
+      padding: 20px;
+      display: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(125,211,252,0.42), transparent);
+    }
+
+    .result-score {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .result-score.good { color: #4ade80; text-shadow: 0 0 18px rgba(74,222,128,0.4); }
+    .result-score.mid  { color: #fbbf24; text-shadow: 0 0 18px rgba(251,191,36,0.4); }
+    .result-score.bad  { color: #f87171; text-shadow: 0 0 18px rgba(248,113,113,0.4); }
+
+    .result-text { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.56; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.18); border-radius: 999px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 991px) {
+      .mode-switch { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+    }
+
+    @media (max-width: 575px) {
+      .hero { padding: 18px; }
+      .panel-body { padding: 16px; }
+      .mode-switch { grid-template-columns: repeat(2, 1fr); }
+      .action-row { flex-direction: column; }
+      .btn-main, .btn-sub { width: 100%; }
+      .icon-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+      .icon-card img { width: 66px; height: 66px; }
+    }
   </style>
 </head>
 <body>
+<div class="memory-shell">
+  <nav class="topbar">
+    <div class="container-fluid px-lg-4 px-3">
+      <div class="topbar-row">
+        <a href="{{ url_for('dashboard') }}" class="brand">
+          <span class="brand-icon"><i class="fa-solid fa-brain"></i></span>
+          <span>
+            <span class="brand-name">NeuroCare</span>
+            <small>Memory Center</small>
+          </span>
+        </a>
 
-<nav class="navbar-premium">
-  <div class="container d-flex align-items-center justify-content-between">
-    <a href="{{ url_for('dashboard') }}" class="navbar-brand-text d-flex align-items-center gap-2" style="text-decoration:none;">
-      <span style="width:34px;height:34px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;box-shadow:0 4px 14px rgba(124,58,237,0.45);flex-shrink:0;">
-        <i class="fa-solid fa-brain"></i>
-      </span>
-      GaitAnalysis Pro
-    </a>
-    <div class="d-flex align-items-center gap-3">
-      <span class="nav-user-badge">
-        <i class="fa-regular fa-circle-user" style="font-size:0.85rem;"></i>
-        {{ user.email }}
-      </span>
-      <a href="{{ url_for('dashboard') }}" class="btn-ghost" style="padding:7px 16px;font-size:0.82rem;">
-        <i class="fa-solid fa-arrow-left"></i> Dashboard
-      </a>
-    </div>
-  </div>
-</nav>
+        <div class="top-actions">
+          <div class="lang-switch" role="group" aria-label="Language switch">
+            <button type="button" class="lang-btn active" data-lang="en">EN</button>
+            <button type="button" class="lang-btn" data-lang="ta">TA</button>
+          </div>
 
-<div class="container" style="max-width:680px; padding:48px 0 80px;">
+          <span class="pill" title="{{ user.email }}">
+            <i class="fa-regular fa-circle-user"></i>
+            <span>{{ user.email }}</span>
+          </span>
 
-  <!-- Header -->
-  <div class="animate-fade mb-5">
-    <div class="hero-badge mb-3" style="display:inline-flex;">
-      <i class="fa-solid fa-brain" style="font-size:0.75rem;"></i>
-      Cognitive Assessment
-    </div>
-    <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:2rem;color:#e0d7ff;line-height:1.2;margin-bottom:10px;">
-      Memory Loss Patient Test
-    </h1>
-    <p style="color:#a8a3cc;font-size:0.95rem;line-height:1.65;max-width:500px;">
-      Read each word carefully, then type it <strong style="color:#c4b5fd;">backwards</strong> in the answer box.
-      For example &nbsp;<span style="font-family:monospace;color:#a78bfa;">forest</span>&nbsp; → &nbsp;<span style="font-family:monospace;color:#a78bfa;">tserof</span>
-    </p>
-  </div>
-
-  <!-- Questions -->
-  <div id="questionsArea">
-    <!-- rendered by JS -->
-  </div>
-
-  <!-- Submit -->
-  <div id="submitArea" class="mt-4">
-    <button class="btn-premium w-100" id="submitBtn" onclick="checkAnswers()" style="padding:14px;font-size:1rem;">
-      <i class="fa-solid fa-check-double"></i>
-      Submit Answers
-    </button>
-  </div>
-
-  <!-- Score panel (hidden until submit) -->
-  <div id="scorePanel" class="glass-card animate-fade mt-5 d-none" style="text-align:center;">
-    <div class="section-title justify-content-center mb-4">
-      <div class="title-icon"><i class="fa-solid fa-star"></i></div>
-      Test Result
-    </div>
-
-    <div class="score-ring">
-      <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
-        <circle id="scoreCircle" cx="60" cy="60" r="48" fill="none"
-          stroke="#7c3aed" stroke-width="9"
-          stroke-dasharray="301.6"
-          stroke-dashoffset="301.6"
-          stroke-linecap="round"
-          style="transition: stroke-dashoffset 0.8s ease, stroke 0.8s ease;"/>
-      </svg>
-      <div class="score-inner">
-        <div class="score-number" id="scoreNumber">0/5</div>
-        <div class="score-label">Score</div>
+          <a href="{{ url_for('dashboard') }}" class="btn-top">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span data-i18n="back_dashboard">Dashboard</span>
+          </a>
+        </div>
       </div>
     </div>
+  </nav>
 
-    <div id="scoreMessage" style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;margin-top:8px;"></div>
-    <div id="scoreSubtext"  style="color:#a8a3cc;font-size:0.85rem;margin-top:6px;"></div>
+  <main class="memory-main container-fluid px-lg-4 px-3 py-4 pb-5">
+    <section class="panel hero">
+      <div class="hero-icon"><i class="fa-solid fa-brain"></i></div>
+      <p class="hero-badge" data-i18n="hero_badge">Interactive Cognitive Evaluation</p>
+      <h1 class="hero-title" data-i18n="hero_title">Recall IQ Memory Assessment</h1>
+      <p class="hero-sub" data-i18n="hero_sub">Choose a test mode below. Complete each task to measure recall quality and attention strength.</p>
 
-    <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
-      <button class="btn-premium" onclick="resetTest()" style="padding:10px 28px;">
-        <i class="fa-solid fa-rotate-right"></i> Try Again
-      </button>
-      <a href="{{ url_for('dashboard') }}" class="btn-ghost" style="padding:10px 24px;">
-        <i class="fa-solid fa-house"></i> Dashboard
-      </a>
-    </div>
-  </div>
+      <div class="mode-switch" id="modeSwitch"></div>
+    </section>
 
+    <section class="panel panel-body mt-4">
+      <h2 class="section-title" id="sectionTitle"></h2>
+      <p class="section-sub" id="sectionSub"></p>
+      <div id="testArea"></div>
+
+      <div class="action-row">
+        <button id="submitBtn" type="button" class="btn-main">
+          <i class="fa-solid fa-check-double"></i>
+          <span data-i18n="submit_answers">Submit Answers</span>
+        </button>
+        <button id="resetBtn" type="button" class="btn-sub">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span data-i18n="reset_test">Reset</span>
+        </button>
+      </div>
+
+      <div id="resultBox" class="result-box">
+        <div id="resultScore" class="result-score">0/0</div>
+        <p id="resultText" class="result-text"></p>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script>
-  const QUESTIONS = [
-    { word: 'FOREST' },
-    { word: 'APPLE'  },
-    { word: 'RIVER'  },
-    { word: 'CLOUD'  },
-    { word: 'BRIDGE' },
+  const LANG_KEY = 'neurocare_lang';
+
+  const TEXT = {
+    en: {
+      back_dashboard: 'Dashboard',
+      hero_badge: 'Interactive Cognitive Evaluation',
+      hero_title: 'Recall IQ Memory Assessment',
+      hero_sub: 'Choose a test mode below. Complete each task to measure recall quality and attention strength.',
+      submit_answers: 'Submit Answers',
+      reset_test: 'Reset',
+      mode_word: 'Word Recall',
+      mode_image: 'Image Memory',
+      mode_number: 'Number Sequence',
+      mode_daily: 'Daily Task',
+      sub_word: 'Type each shown word in reverse order.',
+      sub_image: 'Memorize icons, then select what you saw.',
+      sub_number: 'Enter the next number in each series.',
+      sub_daily: 'Pick the most accurate memory answer.',
+      q_label: 'Question',
+      type_reverse: 'Type this word backwards',
+      type_next: 'Next number in sequence',
+      choose_answer: 'Choose one answer',
+      remember_icons: 'Memorize these icons',
+      ready_for_recall: 'I am ready for recall',
+      select_seen: 'Select the icons you saw earlier',
+      need_select_5: 'Select exactly 5 icons.',
+      score_excellent: 'Excellent recall performance.',
+      score_good: 'Good recall with minor mistakes.',
+      score_attention: 'Needs attention. Repeat this module for better accuracy.'
+    },
+    ta: {
+      back_dashboard: 'டாஷ்போர்டு',
+      hero_badge: 'இணைய அறிவு மதிப்பீடு',
+      hero_title: 'Recall IQ நினைவக மதிப்பீடு',
+      hero_sub: 'கீழே உள்ள தேர்வு முறையை தேர்ந்தெடுக்கவும். ஒவ்வொரு செயலையும் முடித்து நினைவு திறனை மதிப்பிடலாம்.',
+      submit_answers: 'பதில்களை சமர்ப்பிக்கவும்',
+      reset_test: 'மீட்டமை',
+      mode_word: 'சொல் நினைவு',
+      mode_image: 'பட நினைவு',
+      mode_number: 'எண் வரிசை',
+      mode_daily: 'தினசரி பணி',
+      sub_word: 'காணப்படும் ஒவ்வொரு சொல்லையும் தலைகீழாக টাইப் செய்யவும்.',
+      sub_image: 'சின்னங்களை மனப்பாடம் செய்து பின்னர் கண்டவற்றை தேர்ந்தெடுக்கவும்.',
+      sub_number: 'ஒவ்வொரு வரிசையிலும் அடுத்த எண்ணை எழுதவும்.',
+      sub_daily: 'சரியான நினைவு பதிலைத் தேர்வுசெய்க.',
+      q_label: 'கேள்வி',
+      type_reverse: 'இந்த சொல்லை தலைகீழாக টাইப் செய்யவும்',
+      type_next: 'வரிசையில் அடுத்த எண்',
+      choose_answer: 'ஒரு பதிலைத் தேர்வு செய்க',
+      remember_icons: 'இந்த சின்னங்களை நினைவில் கொள்ளவும்',
+      ready_for_recall: 'நினைவு தேர்வுக்கு தயார்',
+      select_seen: 'முன்பு பார்த்த சின்னங்களைத் தேர்வு செய்க',
+      need_select_5: 'சரியாக 5 சின்னங்களைத் தேர்வு செய்யவும்.',
+      score_excellent: 'மிகச் சிறந்த நினைவு செயல்திறன்.',
+      score_good: 'நல்ல நினைவு, சிறிய பிழைகள் உள்ளன.',
+      score_attention: 'கவனம் தேவை. இந்த தொகுதியை மீண்டும் முயற்சிக்கவும்.'
+    }
+  };
+
+  const MODES = [
+    { id: 'word', icon: 'fa-solid fa-keyboard' },
+    { id: 'image', icon: 'fa-regular fa-image' },
+    { id: 'number', icon: 'fa-solid fa-hashtag' },
+    { id: 'daily', icon: 'fa-regular fa-calendar-check' }
   ];
 
-  function buildQuestions() {
-    const area = document.getElementById('questionsArea');
-    area.innerHTML = '';
-    QUESTIONS.forEach((q, i) => {
-      area.innerHTML += `
-        <div class="question-card mb-3 animate-fade" id="card${i}" style="animation-delay:${i * 0.07}s;">
-          <div class="d-flex align-items-center gap-3 mb-3">
-            <div style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;">${i + 1}</div>
-            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.08em;color:#6b6891;font-weight:600;">Type this word backwards</div>
-          </div>
-          <div class="word-display mb-3">${q.word}</div>
-          <input
-            type="text"
-            class="answer-input"
-            id="ans${i}"
-            placeholder="Type backwards…"
-            autocomplete="off"
-            autocorrect="off"
-            spellcheck="false"
-            onkeydown="if(event.key==='Enter') checkAnswers()"
-          />
-          <div class="hint-text">
-            e.g. <span>${q.word.charAt(0)}…</span> reversed is <span>${q.word.split('').reverse().join('').charAt(0)}…</span>
-          </div>
-          <div id="fb${i}"></div>
-        </div>`;
-    });
-  }
-
-  function checkAnswers() {
-    let correct = 0;
-    QUESTIONS.forEach((q, i) => {
-      const input    = document.getElementById('ans' + i);
-      const card     = document.getElementById('card' + i);
-      const fb       = document.getElementById('fb' + i);
-      const expected = q.word.split('').reverse().join('').toUpperCase();
-      const given    = (input.value || '').trim().toUpperCase();
-
-      input.disabled = true;
-
-      if (given === expected) {
-        correct++;
-        card.classList.add('correct');
-        fb.innerHTML = `<div class="feedback-tag correct"><i class="fa-solid fa-circle-check"></i> Correct! &nbsp;<span style="font-family:monospace;opacity:0.8;">${expected}</span></div>`;
-      } else {
-        card.classList.add('wrong');
-        fb.innerHTML = `<div class="feedback-tag wrong"><i class="fa-solid fa-circle-xmark"></i> Wrong &nbsp;— answer: <span style="font-family:monospace;margin-left:4px;">${expected}</span></div>`;
+  const DATA = {
+    word: ['FOREST', 'APPLE', 'RIVER', 'CLOUD', 'BRIDGE'],
+    number: [
+      { seq: '2, 4, 6, 8, ?', ans: '10' },
+      { seq: '5, 10, 15, 20, ?', ans: '25' },
+      { seq: '3, 6, 12, 24, ?', ans: '48' },
+      { seq: '40, 36, 32, 28, ?', ans: '24' },
+      { seq: '1, 1, 2, 3, 5, ?', ans: '8' }
+    ],
+    daily: [
+      {
+        q: {
+          en: 'Which item is used to brush your teeth?',
+          ta: 'பற்களை துப்பரவு செய்ய எந்த பொருள் பயன்படுத்தப்படுகிறது?'
+        },
+        options: {
+          en: ['Spoon', 'Toothbrush', 'Towel'],
+          ta: ['ஸ்பூன்', 'பல் தூரிகை', 'துண்டு']
+        },
+        ans: 1
+      },
+      {
+        q: {
+          en: 'You take medicine every night at 9 PM. What should you do first?',
+          ta: 'நீங்கள் ஒவ்வொரு இரவும் 9 மணிக்கு மருந்து எடுக்கிறீர்கள். முதலில் என்ன செய்ய வேண்டும்?'
+        },
+        options: {
+          en: ['Check the time and dose', 'Go for a walk', 'Watch TV'],
+          ta: ['நேரம் மற்றும் அளவை சரிபார்க்கவும்', 'நடக்க செல்லவும்', 'டிவி பார்க்கவும்']
+        },
+        ans: 0
+      },
+      {
+        q: {
+          en: 'After buying groceries, where should milk usually be kept?',
+          ta: 'மளிகை பொருட்கள் வாங்கிய பிறகு, பாலை எங்கு வைக்க வேண்டும்?'
+        },
+        options: {
+          en: ['On the table', 'In the refrigerator', 'Near the window'],
+          ta: ['மேசையின் மேல்', 'குளிர்சாதன பெட்டியில்', 'ஜன்னல் அருகில்']
+        },
+        ans: 1
       }
+    ],
+    imageSeen: [
+      { id: 'apple', img: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=160&h=160&fit=crop&q=80', label: 'Apple' },
+      { id: 'car',   img: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=160&h=160&fit=crop&q=80', label: 'Car' },
+      { id: 'key',   img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=160&h=160&fit=crop&q=80', label: 'Key' },
+      { id: 'leaf',  img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=160&h=160&fit=crop&q=80', label: 'Leaf' },
+      { id: 'mug',   img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=160&h=160&fit=crop&q=80', label: 'Mug' }
+    ],
+    imagePool: [
+      { id: 'apple',    img: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=160&h=160&fit=crop&q=80', label: 'Apple' },
+      { id: 'car',      img: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=160&h=160&fit=crop&q=80', label: 'Car' },
+      { id: 'key',      img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=160&h=160&fit=crop&q=80', label: 'Key' },
+      { id: 'leaf',     img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=160&h=160&fit=crop&q=80', label: 'Leaf' },
+      { id: 'mug',      img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=160&h=160&fit=crop&q=80', label: 'Mug' },
+      { id: 'book',     img: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=160&h=160&fit=crop&q=80', label: 'Book' },
+      { id: 'clock',    img: 'https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=160&h=160&fit=crop&q=80', label: 'Clock' },
+      { id: 'flower',   img: 'https://images.unsplash.com/photo-1490750967868-88df5691cc78?w=160&h=160&fit=crop&q=80', label: 'Flower' },
+      { id: 'plane',    img: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=160&h=160&fit=crop&q=80', label: 'Plane' },
+      { id: 'umbrella', img: 'https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=160&h=160&fit=crop&q=80', label: 'Umbrella' }
+    ]
+  };
+
+  const state = {
+    lang: 'en',
+    mode: 'word',
+    imageStep: 'memorize',
+    imageSelected: new Set()
+  };
+
+  function t(key) {
+    return (TEXT[state.lang] && TEXT[state.lang][key]) || TEXT.en[key] || key;
+  }
+
+  function applyLanguage(lang) {
+    state.lang = TEXT[lang] ? lang : 'en';
+    localStorage.setItem(LANG_KEY, state.lang);
+    document.documentElement.lang = state.lang === 'ta' ? 'ta' : 'en';
+
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      el.textContent = t(el.getAttribute('data-i18n'));
     });
 
-    showScore(correct);
-  }
-
-  function showScore(correct) {
-    document.getElementById('submitArea').classList.add('d-none');
-    const panel = document.getElementById('scorePanel');
-    panel.classList.remove('d-none');
-
-    document.getElementById('scoreNumber').textContent = correct + '/5';
-
-    // ring: circumference = 2*pi*48 ≈ 301.6
-    const offset = 301.6 * (1 - correct / 5);
-    const circle = document.getElementById('scoreCircle');
-    setTimeout(() => {
-      circle.style.strokeDashoffset = offset;
-      circle.style.stroke = correct >= 4 ? '#10b981' : correct >= 2 ? '#f59e0b' : '#ef4444';
-    }, 100);
-
-    const msgs = [
-      { msg: 'Needs Attention', sub: 'Significant memory difficulties detected. Please consult a specialist.',   color: '#ef4444' },
-      { msg: 'Needs Attention', sub: 'Significant memory difficulties detected. Please consult a specialist.',   color: '#ef4444' },
-      { msg: 'Moderate',        sub: 'Some memory challenges present. Follow-up assessment recommended.',        color: '#f59e0b' },
-      { msg: 'Good',            sub: 'Minor difficulties noted. Continue regular monitoring.',                    color: '#f59e0b' },
-      { msg: 'Very Good',       sub: 'Memory recall is mostly intact. Keep up the mental exercises.',            color: '#10b981' },
-      { msg: 'Excellent',       sub: 'Outstanding! All reversed words answered correctly.',                      color: '#10b981' },
-    ];
-    const m = msgs[correct];
-    document.getElementById('scoreMessage').textContent = m.msg;
-    document.getElementById('scoreMessage').style.color = m.color;
-    document.getElementById('scoreSubtext').textContent = m.sub;
-
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  function resetTest() {
-    QUESTIONS.forEach((_, i) => {
-      document.getElementById('card' + i).classList.remove('correct', 'wrong');
-      const input = document.getElementById('ans' + i);
-      input.value = '';
-      input.disabled = false;
-      document.getElementById('fb' + i).innerHTML = '';
+    document.querySelectorAll('.lang-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.lang === state.lang);
     });
-    document.getElementById('submitArea').classList.remove('d-none');
-    document.getElementById('scorePanel').classList.add('d-none');
-    document.getElementById('scoreCircle').style.strokeDashoffset = '301.6';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    renderModeSwitch();
+    renderModeContent();
   }
 
-  buildQuestions();
+  function renderModeSwitch() {
+    const wrap = document.getElementById('modeSwitch');
+    wrap.innerHTML = MODES.map((mode) => {
+      const label = t(`mode_${mode.id}`);
+      const active = mode.id === state.mode ? 'active' : '';
+      return `<button type="button" class="mode-btn ${active}" data-mode="${mode.id}"><i class="${mode.icon}"></i>${label}</button>`;
+    }).join('');
+
+    wrap.querySelectorAll('.mode-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.mode = btn.dataset.mode;
+        state.imageStep = 'memorize';
+        state.imageSelected = new Set();
+        hideResult();
+        renderModeSwitch();
+        renderModeContent();
+      });
+    });
+  }
+
+  function renderModeContent() {
+    hideResult();
+    const area = document.getElementById('testArea');
+    const title = document.getElementById('sectionTitle');
+    const sub = document.getElementById('sectionSub');
+
+    title.textContent = t(`mode_${state.mode}`);
+    sub.textContent = t(`sub_${state.mode}`);
+
+    if (state.mode === 'word') {
+      area.innerHTML = DATA.word.map((word, index) => `
+        <article class="question">
+          <div class="question-header">${t('q_label')} ${index + 1}</div>
+          <p class="prompt">${word}</p>
+          <input class="answer-input" data-q="${index}" placeholder="${t('type_reverse')}" />
+        </article>
+      `).join('');
+      return;
+    }
+
+    if (state.mode === 'number') {
+      area.innerHTML = DATA.number.map((item, index) => `
+        <article class="question">
+          <div class="question-header">${t('q_label')} ${index + 1}</div>
+          <p class="prompt" style="letter-spacing:0.02em;">${item.seq}</p>
+          <input class="answer-input" data-q="${index}" placeholder="${t('type_next')}" />
+        </article>
+      `).join('');
+      return;
+    }
+
+    if (state.mode === 'daily') {
+      area.innerHTML = DATA.daily.map((item, index) => {
+        const questionText = item.q[state.lang] || item.q.en;
+        const opts = item.options[state.lang] || item.options.en;
+        return `
+          <article class="question">
+            <div class="question-header">${t('q_label')} ${index + 1}</div>
+            <p class="prompt" style="font-size:1rem;letter-spacing:0;line-height:1.5;">${questionText}</p>
+            <div class="choice-grid">
+              ${opts.map((opt, optIndex) => `
+                <label class="choice-item">
+                  <input type="radio" name="daily_${index}" value="${optIndex}" />
+                  <span>${opt}</span>
+                </label>
+              `).join('')}
+            </div>
+          </article>
+        `;
+      }).join('');
+      return;
+    }
+
+    if (state.mode === 'image') {
+      if (state.imageStep === 'memorize') {
+        area.innerHTML = `
+          <article class="question">
+            <div class="question-header">${t('remember_icons')}</div>
+            <div class="icon-grid">
+              ${DATA.imageSeen.map((item) => `
+                <div class="icon-card" style="cursor:default;">
+                  <img src="${item.img}" alt="${item.label}" loading="lazy">
+                  <span>${item.label}</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="action-row">
+              <button type="button" id="readyBtn" class="btn-main">
+                <i class="fa-solid fa-eye"></i>${t('ready_for_recall')}
+              </button>
+            </div>
+          </article>
+        `;
+
+        document.getElementById('readyBtn').addEventListener('click', () => {
+          state.imageStep = 'select';
+          state.imageSelected = new Set();
+          renderModeContent();
+        });
+        return;
+      }
+
+      area.innerHTML = `
+        <article class="question">
+          <div class="question-header">${t('select_seen')}</div>
+          <div class="icon-grid" id="iconSelectGrid">
+            ${DATA.imagePool.map((item) => `
+              <button type="button" class="icon-card" data-id="${item.id}">
+                <img src="${item.img}" alt="${item.label}" loading="lazy">
+                <span>${item.label}</span>
+              </button>
+            `).join('')}
+          </div>
+          <p class="section-sub" style="margin-top:10px;">${t('need_select_5')}</p>
+        </article>
+      `;
+
+      document.querySelectorAll('#iconSelectGrid .icon-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          const id = card.dataset.id;
+          if (state.imageSelected.has(id)) {
+            state.imageSelected.delete(id);
+            card.classList.remove('selected');
+            return;
+          }
+          if (state.imageSelected.size >= 5) {
+            return;
+          }
+          state.imageSelected.add(id);
+          card.classList.add('selected');
+        });
+      });
+    }
+  }
+
+  function scoreResult(correct, total) {
+    const ratio = total ? (correct / total) : 0;
+    const scoreEl = document.getElementById('resultScore');
+    const textEl = document.getElementById('resultText');
+    const box = document.getElementById('resultBox');
+
+    scoreEl.classList.remove('good', 'mid', 'bad');
+    if (ratio >= 0.8) {
+      scoreEl.classList.add('good');
+      textEl.textContent = t('score_excellent');
+    } else if (ratio >= 0.5) {
+      scoreEl.classList.add('mid');
+      textEl.textContent = t('score_good');
+    } else {
+      scoreEl.classList.add('bad');
+      textEl.textContent = t('score_attention');
+    }
+
+    scoreEl.textContent = `${correct}/${total}`;
+    box.style.display = 'block';
+  }
+
+  function hideResult() {
+    const box = document.getElementById('resultBox');
+    box.style.display = 'none';
+  }
+
+  function evaluateCurrentMode() {
+    if (state.mode === 'word') {
+      let correct = 0;
+      const inputs = [...document.querySelectorAll('.answer-input')];
+      inputs.forEach((input, index) => {
+        const expected = DATA.word[index].split('').reverse().join('');
+        const given = (input.value || '').trim().toUpperCase();
+        if (given === expected.toUpperCase()) correct += 1;
+      });
+      scoreResult(correct, DATA.word.length);
+      return;
+    }
+
+    if (state.mode === 'number') {
+      let correct = 0;
+      const inputs = [...document.querySelectorAll('.answer-input')];
+      inputs.forEach((input, index) => {
+        if ((input.value || '').trim() === DATA.number[index].ans) correct += 1;
+      });
+      scoreResult(correct, DATA.number.length);
+      return;
+    }
+
+    if (state.mode === 'daily') {
+      let correct = 0;
+      DATA.daily.forEach((item, index) => {
+        const checked = document.querySelector(`input[name="daily_${index}"]:checked`);
+        if (!checked) return;
+        if (Number(checked.value) === item.ans) correct += 1;
+      });
+      scoreResult(correct, DATA.daily.length);
+      return;
+    }
+
+    if (state.mode === 'image') {
+      if (state.imageStep === 'memorize') {
+        return;
+      }
+      const expected = new Set(DATA.imageSeen.map((i) => i.id));
+      if (state.imageSelected.size !== expected.size) {
+        const scoreEl = document.getElementById('resultScore');
+        const textEl = document.getElementById('resultText');
+        const box = document.getElementById('resultBox');
+        scoreEl.classList.remove('good', 'mid', 'bad');
+        scoreEl.classList.add('bad');
+        scoreEl.textContent = `${state.imageSelected.size}/${expected.size}`;
+        textEl.textContent = t('need_select_5');
+        box.style.display = 'block';
+        return;
+      }
+      let correct = 0;
+      state.imageSelected.forEach((id) => {
+        if (expected.has(id)) correct += 1;
+      });
+      scoreResult(correct, expected.size);
+    }
+  }
+
+  document.getElementById('submitBtn').addEventListener('click', evaluateCurrentMode);
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    state.imageStep = 'memorize';
+    state.imageSelected = new Set();
+    hideResult();
+    renderModeContent();
+  });
+
+  document.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+  });
+
+  const hashMode = (window.location.hash || '').replace('#', '');
+  if (MODES.some((m) => m.id === hashMode)) {
+    state.mode = hashMode;
+  }
+
+  renderModeSwitch();
+  applyLanguage(localStorage.getItem(LANG_KEY) || 'en');
 </script>
-
 </body>
 </html>

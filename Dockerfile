@@ -21,4 +21,4 @@ RUN mkdir -p uploads app/static/uploads app/static/processed
 
 EXPOSE 8080
 
-CMD gunicorn main:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
+CMD gunicorn main:app --bind 0.0.0.0:${PORT:-8080} --timeout 180 --workers 1 --threads 2

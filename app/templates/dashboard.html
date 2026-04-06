@@ -1,334 +1,1663 @@
+﻿
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GaitAnalysis Pro — Dashboard</title>
+  <title>NeuroCare Dashboard</title>
 
-  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-  <!-- Custom CSS -->
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
+
+    :root {
+      --bg: #030a19;
+      --line: rgba(140, 172, 224, 0.16);
+      --text: #ecf4ff;
+      --muted: #7a95c8;
+      --accent: #38bdf8;
+      --accent2: #14b8a6;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background: var(--bg);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 12% -8%, rgba(56,189,248,0.18) 0%, transparent 65%),
+        radial-gradient(ellipse 65% 45% at 92% 4%, rgba(20,184,166,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 50% at 50% 108%, rgba(168,85,247,0.09) 0%, transparent 65%);
+      animation: auroraDrift 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes auroraDrift {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(-18px,14px) scale(1.02); }
+      100% { transform: translate(14px,-8px) scale(0.99); }
+    }
+
+    .neuro-shell::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(126,157,210,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126,157,210,0.038) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 85% 75% at center, black 20%, transparent 70%);
+    }
+
+    /* ── TOPBAR ── */
+    .neuro-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 150;
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      background: rgba(3,9,20,0.78);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 1px 0 rgba(56,189,248,0.07), 0 4px 28px rgba(0,0,0,0.4);
+    }
+
+    .topbar-row {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 10px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0ea5e9, #0f766e);
+      color: #fff;
+      font-size: 1rem;
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.4), 0 8px 22px rgba(14,165,233,0.3), 0 0 32px rgba(14,165,233,0.14);
+      animation: iconGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes iconGlow {
+      from { box-shadow: 0 0 0 1px rgba(14,165,233,0.38), 0 8px 20px rgba(14,165,233,0.3), 0 0 22px rgba(14,165,233,0.1); }
+      to   { box-shadow: 0 0 0 1px rgba(14,165,233,0.6),  0 8px 26px rgba(14,165,233,0.45), 0 0 44px rgba(14,165,233,0.2); }
+    }
+
+    .brand-name {
+      font-size: 1.05rem;
+      background: linear-gradient(90deg, #e0f2fe, #99f6e4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand small {
+      display: block;
+      font-family: 'Manrope', sans-serif;
+      color: var(--muted);
+      font-size: 0.59rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-top: 2px;
+      font-weight: 700;
+      -webkit-text-fill-color: var(--muted);
+    }
+
+    .menu-toggle {
+      margin-left: auto;
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: rgba(8,18,42,0.64);
+      color: var(--text);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .menu-toggle:hover { border-color: rgba(56,189,248,0.4); background: rgba(56,189,248,0.1); }
+
+    .top-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px;
+      background: rgba(6,14,32,0.72);
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-left: 4px;
+      backdrop-filter: blur(10px);
+    }
+
+    .top-nav::-webkit-scrollbar { display: none; }
+
+    .top-nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-radius: 999px;
+      padding: 8px 14px;
+      transition: all 0.22s ease;
+    }
+
+    .top-nav a:hover { color: #c8e8ff; background: rgba(56,189,248,0.1); }
+
+    .top-nav a.active {
+      color: #031e2e;
+      background: linear-gradient(120deg, #7dd3fc, #2dd4bf);
+      box-shadow: 0 4px 14px rgba(45,212,191,0.35), 0 0 0 1px rgba(125,211,252,0.28);
+    }
+
+    .top-actions {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .engine-pill, .user-pill, .logout-pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(6,14,32,0.72);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.71rem;
+      font-weight: 700;
+      padding: 7px 13px;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+    }
+
+    .engine-pill { border-color: rgba(34,197,94,0.28); background: rgba(34,197,94,0.07); }
+
+    .engine-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 0 2px rgba(34,197,94,0.18), 0 0 14px rgba(34,197,94,0.8);
+      animation: pulseDot 1.9s ease-in-out infinite;
+    }
+
+    .lang-switch {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(6,14,32,0.72);
+      padding: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      backdrop-filter: blur(8px);
+    }
+
+    .lang-btn {
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 6px 12px;
+      min-width: 42px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(120deg, #7dd3fc, #2dd4bf);
+      color: #031e2e;
+      box-shadow: 0 4px 14px rgba(56,189,248,0.32);
+    }
+
+    .user-pill { color: #d8e6ff; max-width: 220px; }
+    .user-pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; display: inline-block; }
+    .logout-pill { color: var(--text); }
+    .logout-pill:hover { color: #ffe3b0; border-color: rgba(245,158,11,0.42); background: rgba(245,158,11,0.1); }
+
+    /* ── LAYOUT ── */
+    .dashboard-main { position: relative; z-index: 1; }
+
+    /* ── PANELS ── */
+    .panel {
+      background: linear-gradient(158deg, rgba(7,16,37,0.96), rgba(5,11,27,0.9));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow:
+        0 0 0 1px rgba(56,189,248,0.03) inset,
+        0 22px 52px rgba(1,6,18,0.6),
+        0 1px 0 rgba(125,211,252,0.1) inset;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(125,211,252,0.55) 35%, rgba(45,212,191,0.45) 65%, transparent);
+    }
+
+    .panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      pointer-events: none;
+      background: radial-gradient(ellipse 60% 40% at 50% -15%, rgba(56,189,248,0.055), transparent 65%);
+    }
+
+    .panel-hero { padding: 32px; }
+
+    .hero-icon {
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(56,189,248,0.28), rgba(20,184,166,0.26));
+      border: 1px solid rgba(56,189,248,0.32);
+      color: #7dd3fc;
+      font-size: 1.6rem;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 28px rgba(56,189,248,0.2), 0 0 0 1px rgba(56,189,248,0.1) inset;
+      animation: heroFloat 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroFloat {
+      from { transform: translateY(0);   box-shadow: 0 8px 28px rgba(56,189,248,0.2); }
+      to   { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(56,189,248,0.34); }
+    }
+
+    .hero-badge {
+      margin: 0 0 10px;
+      color: #5eadd6;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 700;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(1.55rem, 2.2vw, 2.1rem);
+      line-height: 1.24;
+      background: linear-gradient(118deg, #f0f9ff 10%, #bae6fd 50%, #99f6e4 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.74;
+      max-width: 720px;
+      font-size: 0.92rem;
+    }
+
+    /* ── MODULE GRID ── */
+    .module-grid {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .module-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      border: 1px solid rgba(140,172,224,0.16);
+      border-radius: 16px;
+      padding: 14px;
+      background: linear-gradient(145deg, rgba(7,16,36,0.88), rgba(5,12,27,0.74));
+      color: var(--text);
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      opacity: 0;
+      background: radial-gradient(ellipse 70% 55% at 25% 50%, rgba(56,189,248,0.09), transparent 65%);
+      transition: opacity 0.3s;
+    }
+
+    .module-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(56,189,248,0.38);
+      box-shadow: 0 14px 30px rgba(1,8,22,0.55), 0 0 0 1px rgba(56,189,248,0.12);
+      color: var(--text);
+    }
+
+    .module-card:hover::after { opacity: 1; }
+
+    .module-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .m-cyan  { background: linear-gradient(135deg,#0284c7,#06b6d4);  box-shadow: 0 6px 16px rgba(6,182,212,0.38); }
+    .m-teal  { background: linear-gradient(135deg,#0f766e,#14b8a6);  box-shadow: 0 6px 16px rgba(20,184,166,0.38); }
+    .m-amber { background: linear-gradient(135deg,#b45309,#f59e0b);  box-shadow: 0 6px 16px rgba(245,158,11,0.38); }
+    .m-red   { background: linear-gradient(135deg,#be123c,#fb7185);  box-shadow: 0 6px 16px rgba(251,113,133,0.38); }
+
+    .module-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #eef5ff; line-height: 1.3; }
+    .module-text small  { display: block; margin-top: 3px; font-size: 0.74rem; color: var(--muted); }
+
+    .module-arrow {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: var(--accent);
+      opacity: 0.55;
+      transition: all 0.22s;
+      flex-shrink: 0;
+    }
+
+    .module-card:hover .module-arrow { opacity: 1; transform: translateX(3px); }
+
+    /* ── PANEL BODY ── */
+    .panel-body { padding: 26px; }
+
+    .panel-head {
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: 1.15rem;
+      background: linear-gradient(118deg, #dbeafe, #a5f3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .chip {
+      border-radius: 999px;
+      border: 1px solid rgba(56,189,248,0.28);
+      background: rgba(56,189,248,0.09);
+      color: #bae6fd;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.66rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 4px 10px;
+    }
+
+    .panel-sub { color: var(--muted); font-size: 0.88rem; line-height: 1.66; margin-bottom: 18px; }
+
+    /* ── FORMS ── */
+    .field-label {
+      display: block;
+      margin-bottom: 7px;
+      color: #6b8fc2;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .form-select, .form-control {
+      background: rgba(5,12,30,0.84) !important;
+      border: 1px solid rgba(140,172,224,0.17) !important;
+      color: var(--text) !important;
+      border-radius: 12px !important;
+      min-height: 46px;
+      font-size: 0.89rem;
+      font-weight: 600;
+      box-shadow: none !important;
+      transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+
+    .form-select:focus, .form-control:focus {
+      border-color: rgba(56,189,248,0.58) !important;
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.14), 0 0 18px rgba(56,189,248,0.08) !important;
+    }
+
+    .form-control::placeholder { color: rgba(122,149,200,0.45) !important; }
+
+    /* ── DROP ZONE ── */
+    .drop-zone {
+      min-height: 172px;
+      border-radius: 16px;
+      border: 1px dashed rgba(56,189,248,0.38);
+      background: rgba(5,12,30,0.72);
+      text-align: center;
+      padding: 22px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.25s;
+    }
+
+    .drop-zone.dragover, .drop-zone:hover {
+      border-color: rgba(45,212,191,0.58);
+      background: rgba(20,184,166,0.055);
+      box-shadow: 0 0 0 4px rgba(20,184,166,0.1), 0 0 28px rgba(20,184,166,0.07);
+    }
+
+    .drop-zone input[type='file'] { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2; }
+
+    .drop-icon {
+      width: 54px;
+      height: 54px;
+      margin: 0 auto;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(56,189,248,0.24), rgba(20,184,166,0.2));
+      color: #7dd3fc;
+      font-size: 1.4rem;
+      border: 1px solid rgba(56,189,248,0.18);
+    }
+
+    .drop-title { font-size: 0.94rem; font-weight: 700; color: #ebf4ff; }
+    .drop-sub   { font-size: 0.77rem; color: var(--muted); margin: 0; }
+
+    .file-info {
+      display: none;
+      margin-top: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(34,197,94,0.28);
+      background: rgba(34,197,94,0.07);
+      padding: 10px 14px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-info i { color: #4ade80; }
+    .file-info strong { display: block; font-size: 0.82rem; color: #d4fce3; }
+    .file-info small  { font-size: 0.74rem; color: #86efac; word-break: break-all; }
+
+    /* ── BUTTONS ── */
+    .action-row { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .btn-main, .btn-sub, .btn-whatsapp {
+      border-radius: 13px;
+      min-height: 46px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 0.87rem;
+      font-weight: 700;
+      transition: all 0.22s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-main {
+      flex: 1;
+      min-width: 200px;
+      color: #031e2e;
+      background: linear-gradient(120deg, #7dd3fc, #2dd4bf);
+      box-shadow: 0 8px 28px rgba(45,212,191,0.32);
+    }
+
+    .btn-main:hover { color: #031e2e; transform: translateY(-2px); box-shadow: 0 12px 36px rgba(45,212,191,0.46); }
+
+    .btn-sub {
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: rgba(6,14,34,0.72);
+    }
+
+    .btn-sub:hover { color: #e2f6ff; border-color: rgba(56,189,248,0.38); background: rgba(56,189,248,0.08); transform: translateY(-1px); }
+
+    .btn-whatsapp {
+      background: linear-gradient(118deg, #25d366, #128c7e);
+      color: #fff;
+      box-shadow: 0 8px 26px rgba(37,211,102,0.32);
+      width: 100%;
+      font-size: 0.94rem;
+      min-height: 50px;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-whatsapp:hover { transform: translateY(-2px); box-shadow: 0 13px 34px rgba(37,211,102,0.5); color: #fff; }
+
+    /* ── LOADER ── */
+    .loader-box {
+      margin-top: 13px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(56,189,248,0.22);
+      background: rgba(56,189,248,0.06);
+      padding: 12px 14px;
+      color: #bde7ff;
+      font-size: 0.82rem;
+    }
+
+    .loader-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(191,229,255,0.28);
+      border-top-color: #bde7ff;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── SESSIONS ── */
+    .session-list { display: grid; gap: 10px; }
+
+    .session-item {
+      border-radius: 14px;
+      border: 1px solid rgba(140,172,224,0.15);
+      background: rgba(5,13,30,0.7);
+      padding: 12px 12px 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      transition: all 0.22s;
+      position: relative;
+    }
+
+    .session-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 20%; bottom: 20%;
+      width: 3px;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .session-item.ok-item::before     { background: var(--ok);     box-shadow: 0 0 8px rgba(34,197,94,0.7); }
+    .session-item.warn-item::before   { background: var(--warn);   box-shadow: 0 0 8px rgba(245,158,11,0.7); }
+    .session-item.danger-item::before { background: var(--danger); box-shadow: 0 0 8px rgba(239,68,68,0.7); }
+
+    .session-item:hover { border-color: rgba(140,172,224,0.28); transform: translateX(4px); }
+
+    .session-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 9px currentColor; }
+    .dot-ok     { color: var(--ok);     background: var(--ok); }
+    .dot-warn   { color: var(--warn);   background: var(--warn); }
+    .dot-danger { color: var(--danger); background: var(--danger); }
+
+    .session-text { flex: 1; min-width: 0; }
+    .session-text strong { display: block; color: #e9f3ff; font-size: 0.83rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-text small  { font-size: 0.71rem; color: var(--muted); }
+
+    .risk-tag {
+      border-radius: 999px;
+      border: 1px solid;
+      padding: 4px 9px;
+      font-size: 0.65rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .risk-low    { color: #86efac; background: rgba(34,197,94,0.11);  border-color: rgba(34,197,94,0.36); }
+    .risk-medium { color: #fcd34d; background: rgba(245,158,11,0.11); border-color: rgba(245,158,11,0.36); }
+    .risk-high   { color: #fda4af; background: rgba(239,68,68,0.11);  border-color: rgba(239,68,68,0.36); }
+
+    /* ── METRIC BOX ── */
+    .mini-box {
+      margin-top: 14px;
+      border-radius: 15px;
+      border: 1px solid rgba(140,172,224,0.13);
+      background: rgba(4,11,26,0.62);
+      padding: 14px;
+    }
+
+    .mini-line { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.77rem; margin-bottom: 7px; }
+    .mini-line strong { color: #d8e9ff; font-family: 'Sora', sans-serif; font-size: 0.84rem; }
+
+    .mini-track { height: 5px; border-radius: 999px; background: rgba(140,172,224,0.11); overflow: hidden; margin-bottom: 12px; }
+
+    .mini-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0ea5e9, #38bdf8, #2dd4bf);
+      box-shadow: 0 0 8px rgba(56,189,248,0.55);
+      animation: fillGrow 1.3s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    @keyframes fillGrow { from { width: 0% !important; } }
+
+    /* ── FEEDBACK CARDS ── */
+    .feedback-grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .feedback-card {
+      border-radius: 16px;
+      border: 1px solid rgba(140,172,224,0.14);
+      background: rgba(6,14,32,0.68);
+      padding: 18px;
+      transition: all 0.24s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feedback-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(56,189,248,0.3), transparent);
+      opacity: 0;
+      transition: opacity 0.28s;
+    }
+
+    .feedback-card:hover { border-color: rgba(56,189,248,0.26); transform: translateY(-2px); box-shadow: 0 12px 28px rgba(1,6,18,0.48); }
+    .feedback-card:hover::before { opacity: 1; }
+
+    .feedback-card-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .fc-blue   { background: linear-gradient(135deg,rgba(14,165,233,0.25),rgba(6,182,212,0.2));   color: #7dd3fc; border: 1px solid rgba(14,165,233,0.2); }
+    .fc-teal   { background: linear-gradient(135deg,rgba(15,118,110,0.25),rgba(20,184,166,0.2));   color: #5eead4; border: 1px solid rgba(20,184,166,0.2); }
+    .fc-amber  { background: linear-gradient(135deg,rgba(180,83,9,0.22),rgba(245,158,11,0.18));    color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+    .fc-red    { background: linear-gradient(135deg,rgba(190,18,60,0.22),rgba(251,113,133,0.18)); color: #fda4af; border: 1px solid rgba(239,68,68,0.2); }
+
+    .feedback-card h3 { margin: 0; font-size: 0.88rem; color: #ccdeff; font-weight: 700; font-family: 'Sora', sans-serif; }
+    .feedback-card p  { margin: 7px 0 0; color: var(--muted); font-size: 0.77rem; line-height: 1.56; }
+
+    /* ── WHATSAPP FORM ── */
+    .wa-panel {
+      margin-top: 22px;
+      border-radius: 22px;
+      border: 1px solid rgba(37,211,102,0.2);
+      background: linear-gradient(155deg, rgba(4,14,10,0.88), rgba(3,10,22,0.9));
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wa-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(37,211,102,0.48), rgba(18,140,126,0.38), transparent);
+    }
+
+    .wa-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse 55% 35% at 50% -8%, rgba(37,211,102,0.065), transparent 60%);
+    }
+
+    .wa-header {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 22px;
+    }
+
+    .wa-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #25d366, #128c7e);
+      color: #fff;
+      font-size: 1.4rem;
+      box-shadow: 0 8px 22px rgba(37,211,102,0.38);
+      flex-shrink: 0;
+      animation: waGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes waGlow {
+      from { box-shadow: 0 8px 22px rgba(37,211,102,0.34); }
+      to   { box-shadow: 0 10px 30px rgba(37,211,102,0.55), 0 0 40px rgba(37,211,102,0.15); }
+    }
+
+    .wa-title { font-family: 'Sora', sans-serif; font-size: 1.08rem; font-weight: 700; margin: 0; background: linear-gradient(90deg, #4ade80, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .wa-sub   { margin: 3px 0 0; font-size: 0.74rem; color: rgba(74,222,128,0.56); }
+
+    .wa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .wa-field { margin-bottom: 12px; }
+
+    .wa-field .field-label { color: rgba(74,222,128,0.65); }
+
+    .wa-field .form-select,
+    .wa-field .form-control { border-color: rgba(37,211,102,0.18) !important; }
+
+    .wa-field .form-select:focus,
+    .wa-field .form-control:focus {
+      border-color: rgba(37,211,102,0.52) !important;
+      box-shadow: 0 0 0 3px rgba(37,211,102,0.11), 0 0 16px rgba(37,211,102,0.07) !important;
+    }
+
+    .wa-preview-label { font-size: 0.65rem; color: rgba(74,222,128,0.48); text-transform: uppercase; letter-spacing: 0.13em; font-weight: 700; margin-bottom: 6px; }
+
+    .wa-preview {
+      border-radius: 12px;
+      border: 1px solid rgba(37,211,102,0.18);
+      background: rgba(4,16,11,0.72);
+      padding: 12px 14px;
+      font-size: 0.79rem;
+      color: rgba(187,247,208,0.72);
+      line-height: 1.62;
+      min-height: 64px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'Manrope', sans-serif;
+      margin-bottom: 14px;
+    }
+
+    /* ── TECHNOLOGY CARDS ── */
+    .tech-card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 22px; }
+
+    .tech-card {
+      border-radius: 18px;
+      border: 1px solid rgba(140,172,224,0.14);
+      background: rgba(6,14,32,0.7);
+      padding: 20px;
+      transition: all 0.26s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tech-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.28s;
+    }
+
+    .tech-card:hover { border-color: rgba(56,189,248,0.24); transform: translateY(-3px); box-shadow: 0 16px 34px rgba(1,6,18,0.55); }
+    .tech-card:hover::before { opacity: 1; }
+
+    .tc-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      margin-bottom: 14px;
+    }
+
+    .tc-blue   { background: linear-gradient(135deg,rgba(14,165,233,0.26),rgba(6,182,212,0.2));   color: #7dd3fc; border: 1px solid rgba(14,165,233,0.22); }
+    .tc-teal   { background: linear-gradient(135deg,rgba(15,118,110,0.26),rgba(20,184,166,0.2));   color: #5eead4; border: 1px solid rgba(20,184,166,0.22); }
+    .tc-purple { background: linear-gradient(135deg,rgba(168,85,247,0.24),rgba(139,92,246,0.18)); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.22); }
+
+    .tech-card h3 { margin: 0 0 8px; font-family: 'Sora', sans-serif; font-size: 0.94rem; color: #dbeafe; }
+    .tech-card p  { margin: 0; color: var(--muted); font-size: 0.79rem; line-height: 1.6; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.18); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.38); }
+
+    /* ── ANIMATIONS ── */
+    .animate-rise { animation: rise 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+    .delay-1 { animation-delay: 0.07s; }
+    .delay-2 { animation-delay: 0.14s; }
+    .delay-3 { animation-delay: 0.21s; }
+
+    @keyframes spin       { to { transform: rotate(360deg); } }
+    @keyframes pulseDot   { 0%,100% { box-shadow: 0 0 0 2px rgba(34,197,94,0.18), 0 0 12px rgba(34,197,94,0.8); } 50% { box-shadow: 0 0 0 4px rgba(34,197,94,0.1), 0 0 22px rgba(34,197,94,0.45); } }
+    @keyframes rise       { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1199px) {
+      .module-grid { grid-template-columns: 1fr; }
+      .panel-hero  { padding: 24px; }
+      .panel-body  { padding: 20px; }
+    }
+
+    @media (max-width: 991px) {
+      .menu-toggle { display: inline-flex; }
+      .top-nav, .top-actions { width: 100%; display: none; }
+      .top-nav.open, .top-actions.open { display: flex; }
+      .top-nav { order: 3; margin-left: 0; border-radius: 16px; flex-wrap: wrap; gap: 4px; padding: 6px; justify-content: center; }
+      .top-actions { order: 4; margin-left: 0; justify-content: flex-start; }
+      .feedback-grid { grid-template-columns: 1fr; }
+      .wa-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 575px) {
+      .panel-hero  { padding: 18px; }
+      .panel-body  { padding: 16px; }
+      .hero-title  { font-size: 1.38rem; }
+      .action-row  { flex-direction: column; }
+      .btn-main, .btn-sub { width: 100%; }
+      .user-pill   { max-width: 160px; }
+      .user-pill span { max-width: 100px; }
+      .module-grid { grid-template-columns: 1fr; }
+      .wa-panel    { padding: 16px; }
+      .tech-card-row { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
+{% set active_tab = active_tab|default('recall') %}
+<div class="neuro-shell">
+  <nav class="neuro-topbar">
+    <div class="container-fluid px-lg-4 px-3">
+      <div class="topbar-row">
+        <a href="{{ url_for('dashboard') }}" class="brand">
+          <span class="brand-icon"><i class="fa-solid fa-brain"></i></span>
+          <span>
+            <span class="brand-name">NeuroCare</span>
+            <small>Dementia Detection Framework</small>
+          </span>
+        </a>
 
-<!-- ================================================================
-     NAVBAR
-     ================================================================ -->
-<nav class="navbar-premium">
-  <div class="container d-flex align-items-center justify-content-between">
+        <button id="menuToggle" class="menu-toggle" type="button" aria-label="Toggle menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
 
-    <!-- Brand -->
-    <a href="{{ url_for('dashboard') }}" class="navbar-brand-text d-flex align-items-center gap-2" style="text-decoration:none;">
-      <span style="
-        width:34px; height:34px;
-        background: linear-gradient(135deg, #7c3aed, #4f46e5);
-        border-radius:9px;
-        display:flex; align-items:center; justify-content:center;
-        font-size:1.1rem; color:#fff;
-        box-shadow:0 4px 14px rgba(124,58,237,0.45);
-        flex-shrink:0;
-      ">
-        <i class="fa-solid fa-brain"></i>
-      </span>
-      GaitAnalysis Pro
-    </a>
-
-    <!-- Right side -->
-    <div class="d-flex align-items-center gap-3">
-      <span class="nav-user-badge">
-        <i class="fa-regular fa-circle-user" style="font-size:0.85rem;"></i>
-        {{ user.email }}
-      </span>
-      <a href="{{ url_for('logout') }}" class="btn-ghost" style="padding:7px 16px; font-size:0.82rem;">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        Logout
-      </a>
-    </div>
-  </div>
-</nav>
-
-<!-- ================================================================
-     HERO
-     ================================================================ -->
-<section class="hero-section">
-  <div class="container" style="position:relative; z-index:1;">
-    <div class="animate-fade">
-      <div class="hero-badge">
-        <i class="fa-solid fa-wand-magic-sparkles" style="font-size:0.75rem;"></i>
-        AI-Powered Gait Analysis
-      </div>
-      <h1 class="hero-title">Vision-Based<br/>Dementia Detection</h1>
-      <p class="hero-sub">
-        Upload a gait video and our CNN-powered model will extract posture
-        metrics, compute a walking quality score, and estimate cognitive
-        risk — all in seconds.
-      </p>
-      <div class="d-flex flex-wrap gap-2">
-        <span class="stat-chip">
-          <i class="fa-solid fa-film" style="color:#a78bfa; font-size:0.75rem;"></i>
-          30 Frames
-        </span>
-        <span class="stat-chip">
-          <i class="fa-solid fa-microchip" style="color:#a78bfa; font-size:0.75rem;"></i>
-          CNN Model
-        </span>
-        <span class="stat-chip">
-          <i class="fa-solid fa-bolt" style="color:#a78bfa; font-size:0.75rem;"></i>
-          Real-time
-        </span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ================================================================
-     MAIN CONTENT
-     ================================================================ -->
-<div class="container" style="margin-top: -40px; position:relative; z-index:2; padding-bottom:60px;">
-  <div class="row g-4">
-
-    <!-- ============================================================
-         LEFT — Analysis Form
-         ============================================================ -->
-    <div class="col-lg-7 animate-fade" style="animation-delay:0.1s;">
-      <div class="glass-card">
-
-        <div class="section-title">
-          <div class="title-icon">
-            <i class="fa-solid fa-video"></i>
-          </div>
-          Start Gait Analysis
+        <div id="topNav" class="top-nav">
+          <a href="{{ url_for('dashboard_technology') }}" class="{{ 'active' if active_tab == 'technology' else '' }}" data-i18n="nav_technology">Technology</a>
+          <a href="{{ url_for('dashboard_clinical') }}" class="{{ 'active' if active_tab == 'clinical' else '' }}" data-i18n="nav_clinical">Clinical Data</a>
+          <a href="{{ url_for('dashboard_gait') }}" class="{{ 'active' if active_tab == 'gait' else '' }}" data-i18n="nav_gait">Gait Analysis</a>
+          <a href="{{ url_for('dashboard_recall') }}" class="{{ 'active' if active_tab == 'recall' else '' }}" data-i18n="nav_recall">Recall IQ</a>
+          <a href="{{ url_for('dashboard_feedback') }}" class="{{ 'active' if active_tab == 'feedback' else '' }}" data-i18n="nav_feedback">Feedback</a>
         </div>
 
-        <form action="{{ url_for('predict') }}" method="POST" enctype="multipart/form-data" id="analysisForm">
+        <div id="topActions" class="top-actions">
+          <span class="engine-pill">
+            <span class="engine-dot"></span>
+            <span data-i18n="engine_active">Neural Link Active</span>
+          </span>
 
-          <!-- Task Config + Extraction Length -->
-          <div class="row g-3 mb-3">
-            <div class="col-sm-6">
-              <label class="form-label">Task Configuration</label>
-              <select class="form-select" name="task_type">
-                <option value="single">Single Task</option>
-                <option value="dual">Dual Task</option>
-              </select>
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">Extraction Length</label>
-              <input
-                type="text"
-                class="form-control"
-                value="30 Frames"
-                disabled
-                style="cursor:not-allowed;"
-              />
-            </div>
+          <div class="lang-switch" role="group" aria-label="Language switch">
+            <button type="button" class="lang-btn active" data-lang="en">EN</button>
+            <button type="button" class="lang-btn" data-lang="ta">TA</button>
           </div>
 
-          <!-- Upload Zone -->
-          <div class="mb-3">
-            <label class="form-label">Video File</label>
-            <div class="upload-zone" id="uploadZone">
-              <div class="upload-icon">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="user-pill" title="{{ user.email }}">
+            <i class="fa-regular fa-circle-user"></i>
+            <span>{{ user.email }}</span>
+          </span>
+
+          <a href="{{ url_for('logout') }}" class="logout-pill">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span data-i18n="logout">Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="dashboard-main container-fluid px-lg-4 px-3 py-4 pb-5">
+    {% if active_tab == 'technology' %}
+    <section class="panel panel-hero animate-rise">
+      <div class="hero-icon"><i class="fa-solid fa-microchip"></i></div>
+      <p class="hero-badge" data-i18n="tech_badge">Neural System Architecture</p>
+      <h1 class="hero-title" data-i18n="tech_title">Technology Stack Intelligence</h1>
+      <p class="hero-sub" data-i18n="tech_sub">Understand how the end-to-end pipeline transforms raw gait video into clinical risk signals.</p>
+
+      <div class="tech-card-row">
+        <article class="tech-card">
+          <div class="tc-icon tc-blue"><i class="fa-solid fa-microchip-ai"></i></div>
+          <h3 data-i18n="tech_card_1_title">Pose Landmark Engine</h3>
+          <p data-i18n="tech_card_1_text">MediaPipe extracts frame-level keypoints for head, spine, shoulder, hip, and lower-limb dynamics.</p>
+        </article>
+        <article class="tech-card">
+          <div class="tc-icon tc-teal"><i class="fa-solid fa-network-wired"></i></div>
+          <h3 data-i18n="tech_card_2_title">CNN Risk Inference</h3>
+          <p data-i18n="tech_card_2_text">A trained CNN model evaluates motion signatures and predicts dementia risk with confidence-weighted scoring.</p>
+        </article>
+        <article class="tech-card">
+          <div class="tc-icon tc-purple"><i class="fa-solid fa-chart-area"></i></div>
+          <h3 data-i18n="tech_card_3_title">Clinical Visualization</h3>
+          <p data-i18n="tech_card_3_text">Interactive dashboards convert technical outputs into explainable indicators for clinicians and caregivers.</p>
+        </article>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if active_tab == 'clinical' %}
+    <div class="row g-4 mt-1">
+      <div class="col-xl-8">
+        <section class="panel panel-body animate-rise">
+          <div class="panel-head">
+            <h2 data-i18n="upload_title">Clinical Data Intake</h2>
+            <span class="chip"><i class="fa-solid fa-shield"></i> <span data-i18n="secure_chip">Secure Pipeline</span></span>
+          </div>
+          <p class="panel-sub" data-i18n="upload_sub">Upload a patient walking clip. The AI model extracts posture landmarks and computes dementia risk from gait behavior.</p>
+
+          <form action="{{ url_for('predict') }}" method="POST" enctype="multipart/form-data" id="analysisForm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="field-label" for="taskType" data-i18n="task_label">Task Configuration</label>
+                <select class="form-select" name="task_type" id="taskType">
+                  <option value="single" data-i18n="task_single">Single Task</option>
+                  <option value="dual" data-i18n="task_dual">Dual Task</option>
+                </select>
               </div>
-              <div class="upload-title">Drop your video here</div>
-              <div class="upload-sub">MP4, AVI, MOV supported &nbsp;·&nbsp; Max 200MB</div>
-              <input
-                type="file"
-                name="video"
-                id="videoInput"
-                accept="video/*"
-                required
-              />
-            </div>
-          </div>
-
-          <!-- File selected info -->
-          <div id="fileSelectedInfo" class="mb-3" style="display:none;">
-            <div style="
-              background: rgba(124,58,237,0.10);
-              border: 1px solid rgba(124,58,237,0.30);
-              border-radius: 10px;
-              padding: 10px 16px;
-              display: flex;
-              align-items: center;
-              gap: 10px;
-            ">
-              <i class="fa-solid fa-circle-check" style="color:#a78bfa; font-size:1rem; flex-shrink:0;"></i>
-              <div>
-                <div style="font-size:0.82rem; font-weight:600; color:#c4b5fd;">File selected</div>
-                <div id="selectedFileName" style="font-size:0.78rem; color:#a8a3cc; margin-top:1px; word-break:break-all;"></div>
+              <div class="col-md-6">
+                <label class="field-label" for="frameInfo" data-i18n="frame_label">Extraction Length</label>
+                <input class="form-control" id="frameInfo" type="text" value="30 Frames" disabled />
               </div>
             </div>
+
+            <div class="mt-3">
+              <label class="field-label" for="videoInput" data-i18n="file_label">Video File</label>
+              <div id="uploadZone" class="drop-zone">
+                <div class="drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <div class="drop-title" data-i18n="drop_title">Drop your video here</div>
+                <p class="drop-sub" data-i18n="drop_sub">MP4, AVI, MOV supported. Max size 200MB.</p>
+                <input type="file" name="video" id="videoInput" accept="video/*" required />
+              </div>
+
+              <div id="fileSelectedInfo" class="file-info">
+                <i class="fa-solid fa-circle-check"></i>
+                <div>
+                  <strong data-i18n="file_selected">File selected</strong>
+                  <small id="selectedFileName"></small>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <button id="submitBtn" type="submit" class="btn-main" onclick="return startAnalysis()">
+                <i class="fa-solid fa-play"></i>
+                <span data-i18n="run_analysis">Run Gait Analysis</span>
+              </button>
+              <a href="{{ url_for('realtime') }}" class="btn-sub">
+                <i class="fa-solid fa-camera"></i>
+                <span data-i18n="live_camera">Live Camera</span>
+              </a>
+              <a href="{{ url_for('memory_test') }}" class="btn-sub">
+                <i class="fa-solid fa-brain"></i>
+                <span data-i18n="memory_center">Memory Test Center</span>
+              </a>
+            </div>
+
+            <div id="loaderArea" class="loader-box">
+              <span class="loader-spinner"></span>
+              <span id="loaderPrimary" data-i18n="loader_text">Processing video and extracting gait frames...</span>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="col-xl-4">
+        <section class="panel panel-body animate-rise delay-1">
+          <div class="panel-head">
+            <h2 data-i18n="clinical_notes_title">Clinical Notes</h2>
+          </div>
+          <p class="panel-sub" data-i18n="clinical_notes_sub">Recommended capture standards to improve prediction reliability.</p>
+
+          <div class="mini-box">
+            <div class="mini-line"><span data-i18n="clinical_note_1">Camera angle</span><strong data-i18n="clinical_note_1_value">Eye-level</strong></div>
+            <div class="mini-line"><span data-i18n="clinical_note_2">Walking path</span><strong data-i18n="clinical_note_2_value">Straight 4-6m</strong></div>
+            <div class="mini-line"><span data-i18n="clinical_note_3">Lighting</span><strong data-i18n="clinical_note_3_value">Uniform, no glare</strong></div>
+            <div class="mini-line"><span data-i18n="clinical_note_4">Frame quality</span><strong data-i18n="clinical_note_4_value">Stable 24+ FPS</strong></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if active_tab == 'gait' %}
+    <div class="row g-4 mt-1">
+      <div class="col-xl-7">
+        <section class="panel panel-body animate-rise">
+          <div class="panel-head">
+            <h2 data-i18n="session_title">Recent Sessions</h2>
+            <span class="chip"><i class="fa-solid fa-wave-square"></i> AI</span>
+          </div>
+          <p class="panel-sub" data-i18n="session_sub">Latest clinical runs with fast risk overview.</p>
+
+          <div class="session-list">
+            <article class="session-item ok-item">
+              <span class="session-dot dot-ok"></span>
+              <div class="session-text">
+                <strong>Single Task — walk_01.mp4</strong>
+                <small data-i18n="date_one">Apr 02, 2026</small>
+              </div>
+              <span class="risk-tag risk-low" data-i18n="risk_low">Low</span>
+            </article>
+
+            <article class="session-item warn-item">
+              <span class="session-dot dot-warn"></span>
+              <div class="session-text">
+                <strong>Dual Task — corridor_02.mp4</strong>
+                <small data-i18n="date_two">Mar 30, 2026</small>
+              </div>
+              <span class="risk-tag risk-medium" data-i18n="risk_medium">Medium</span>
+            </article>
+
+            <article class="session-item danger-item">
+              <span class="session-dot dot-danger"></span>
+              <div class="session-text">
+                <strong>Single Task — elder_03.avi</strong>
+                <small data-i18n="date_three">Mar 28, 2026</small>
+              </div>
+              <span class="risk-tag risk-high" data-i18n="risk_high">High</span>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="col-xl-5">
+        <section class="panel panel-body animate-rise delay-1">
+          <div class="panel-head">
+            <h2 data-i18n="gait_insight_title">Gait Insight Snapshot</h2>
+          </div>
+          <p class="panel-sub" data-i18n="gait_insight_sub">Current model indicators from the latest evaluation run.</p>
+
+          <div class="mini-box">
+            <div class="mini-line"><span data-i18n="metric_spine">Spine Alignment</span><strong>82%</strong></div>
+            <div class="mini-track"><div class="mini-fill" style="width:82%"></div></div>
+            <div class="mini-line"><span data-i18n="metric_shoulder">Shoulder Symmetry</span><strong>77%</strong></div>
+            <div class="mini-track"><div class="mini-fill" style="width:77%"></div></div>
+            <div class="mini-line"><span data-i18n="metric_step">Step Regularity</span><strong>73%</strong></div>
+            <div class="mini-track"><div class="mini-fill" style="width:73%"></div></div>
           </div>
 
-          <!-- Submit -->
-          <div class="d-flex gap-2">
-            <button
-              type="submit"
-              class="btn-premium flex-grow-1"
-              id="submitBtn"
-              onclick="showLoader()"
-              style="padding:13px; font-size:0.95rem;"
-            >
-              <i class="fa-solid fa-bolt"></i>
-              Execute CNN Analysis
-            </button>
-            <a href="{{ url_for('realtime') }}" class="btn-ghost d-flex align-items-center gap-2" style="padding:13px 20px; font-size:0.9rem; white-space:nowrap;">
+          <div class="action-row">
+            <a href="{{ url_for('realtime') }}" class="btn-main">
               <i class="fa-solid fa-camera"></i>
-              Live Camera
+              <span data-i18n="live_camera">Live Camera</span>
+            </a>
+            <a href="{{ url_for('dashboard_clinical') }}" class="btn-sub">
+              <i class="fa-solid fa-upload"></i>
+              <span data-i18n="upload_title">Clinical Data Intake</span>
             </a>
           </div>
-
-          <!-- Memory Test -->
-          <a href="{{ url_for('memory_test') }}" class="btn-ghost w-100 mt-2 justify-content-center" style="padding:11px; font-size:0.88rem; border-color:rgba(167,139,250,0.3); color:#c4b5fd;">
-            <i class="fa-solid fa-brain"></i>
-            Memory Loss Patient Test
-          </a>
-
-          <!-- Loader -->
-          <div id="loaderArea" class="analysis-loader mt-3" style="display:none;">
-            <div class="loader-spinner"></div>
-            <div class="loader-text">Processing video — extracting gait frames&hellip;</div>
-            <div style="font-size:0.75rem; color:#6b6891;">This may take 30–90 seconds depending on video length</div>
-          </div>
-
-        </form>
+        </section>
       </div>
     </div>
+    {% endif %}
 
-    <!-- ============================================================
-         RIGHT — Recent Sessions
-         ============================================================ -->
-    <div class="col-lg-5 animate-fade" style="animation-delay:0.2s;">
-      <div class="glass-card">
+    {% if active_tab == 'recall' %}
+    <section class="panel panel-hero animate-rise">
+      <div class="hero-icon"><i class="fa-solid fa-brain"></i></div>
+      <p class="hero-badge" data-i18n="hero_badge">Cognitive Assessment Suite</p>
+      <h1 class="hero-title" data-i18n="hero_title">Recall IQ Memory Assessment</h1>
+      <p class="hero-sub" data-i18n="hero_sub">Comprehensive cognitive evaluation module designed to detect early signs of memory impairment through interactive tests and trend monitoring.</p>
 
-        <div class="section-title">
-          <div class="title-icon">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-          </div>
-          Recent Sessions
-        </div>
+      <div class="module-grid">
+        <a href="{{ url_for('memory_test') }}#word" class="module-card">
+          <span class="module-icon m-cyan"><i class="fa-solid fa-keyboard"></i></span>
+          <span class="module-text">
+            <strong data-i18n="module_word">Word Recall Test</strong>
+            <small data-i18n="module_word_sub">Reverse and remember key words</small>
+          </span>
+          <i class="fa-solid fa-arrow-right module-arrow"></i>
+        </a>
 
-        <!-- Activity items (placeholder recent sessions) -->
-        <div class="activity-item">
-          <div class="activity-dot" style="background:#10b981; color:#10b981;"></div>
-          <div class="activity-info">
-            <div class="activity-title">Single Task — walking_sample_01.mp4</div>
-            <div class="activity-date"><i class="fa-regular fa-calendar" style="font-size:0.68rem;"></i>&nbsp; Mar 30, 2026</div>
-          </div>
-          <span class="risk-badge risk-low">Low</span>
-        </div>
+        <a href="{{ url_for('memory_test') }}#image" class="module-card">
+          <span class="module-icon m-teal"><i class="fa-regular fa-image"></i></span>
+          <span class="module-text">
+            <strong data-i18n="module_image">Image Memory Test</strong>
+            <small data-i18n="module_image_sub">Visual recall with icon patterns</small>
+          </span>
+          <i class="fa-solid fa-arrow-right module-arrow"></i>
+        </a>
 
-        <div class="activity-item">
-          <div class="activity-dot" style="background:#f59e0b; color:#f59e0b;"></div>
-          <div class="activity-info">
-            <div class="activity-title">Dual Task — corridor_test_02.mp4</div>
-            <div class="activity-date"><i class="fa-regular fa-calendar" style="font-size:0.68rem;"></i>&nbsp; Mar 28, 2026</div>
-          </div>
-          <span class="risk-badge risk-medium">Medium</span>
-        </div>
+        <a href="{{ url_for('memory_test') }}#number" class="module-card">
+          <span class="module-icon m-amber"><i class="fa-solid fa-hashtag"></i></span>
+          <span class="module-text">
+            <strong data-i18n="module_number">Number Sequence Test</strong>
+            <small data-i18n="module_number_sub">Track logic progression quickly</small>
+          </span>
+          <i class="fa-solid fa-arrow-right module-arrow"></i>
+        </a>
 
-        <div class="activity-item">
-          <div class="activity-dot" style="background:#ef4444; color:#ef4444;"></div>
-          <div class="activity-info">
-            <div class="activity-title">Single Task — subject_elderly_03.avi</div>
-            <div class="activity-date"><i class="fa-regular fa-calendar" style="font-size:0.68rem;"></i>&nbsp; Mar 25, 2026</div>
-          </div>
-          <span class="risk-badge risk-high">High</span>
-        </div>
-
-        <!-- Info / Methodology Card -->
-        <div class="mt-4" style="
-          background: linear-gradient(135deg, rgba(124,58,237,0.14) 0%, rgba(79,70,229,0.10) 100%);
-          border: 1px solid rgba(124,58,237,0.22);
-          border-radius:14px;
-          padding:18px;
-        ">
-          <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;">
-            <i class="fa-solid fa-circle-info" style="color:#a78bfa; font-size:0.95rem;"></i>
-            <span style="font-weight:700; font-size:0.88rem; color:#e0d7ff;">How it works</span>
-          </div>
-          <p style="font-size:0.8rem; color:#a8a3cc; line-height:1.65; margin:0;">
-            The system samples <strong style="color:#c4b5fd;">30 evenly-spaced frames</strong>
-            from your video, runs <strong style="color:#c4b5fd;">MediaPipe pose estimation</strong>
-            on each, then feeds the landmark sequences into a trained
-            <strong style="color:#c4b5fd;">CNN classifier</strong> to score
-            spine alignment, shoulder symmetry, hip stability, head posture,
-            and step regularity.
-          </p>
-        </div>
-
+        <a href="{{ url_for('memory_test') }}#daily" class="module-card">
+          <span class="module-icon m-red"><i class="fa-regular fa-calendar-check"></i></span>
+          <span class="module-text">
+            <strong data-i18n="module_daily">Daily Task Recall</strong>
+            <small data-i18n="module_daily_sub">Assess routine memory responses</small>
+          </span>
+          <i class="fa-solid fa-arrow-right module-arrow"></i>
+        </a>
       </div>
-    </div>
+    </section>
+    {% endif %}
 
-  </div><!-- /row -->
-</div><!-- /container -->
+    {% if active_tab == 'feedback' %}
+    <section class="panel panel-hero animate-rise">
+      <div class="hero-icon"><i class="fa-regular fa-message"></i></div>
+      <p class="hero-badge" data-i18n="feedback_badge">Assistive Reporting Layer</p>
+      <h1 class="hero-title" data-i18n="feedback_title">Feedback Intelligence</h1>
+      <p class="hero-sub" data-i18n="feedback_sub">Built-in summaries for clinicians and caregivers. Send instant updates directly via WhatsApp.</p>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+      <div class="feedback-grid mt-3">
+        <article class="feedback-card">
+          <div class="feedback-card-icon fc-blue"><i class="fa-solid fa-stethoscope"></i></div>
+          <h3 data-i18n="feedback_clinician">For Clinician</h3>
+          <p data-i18n="feedback_clinician_text">Includes posture drift and dual task impact for quick triage.</p>
+        </article>
+        <article class="feedback-card">
+          <div class="feedback-card-icon fc-teal"><i class="fa-solid fa-heart-pulse"></i></div>
+          <h3 data-i18n="feedback_caregiver">For Caregiver</h3>
+          <p data-i18n="feedback_caregiver_text">Provides simple daily guidance and monitoring reminders.</p>
+        </article>
+        <article class="feedback-card">
+          <div class="feedback-card-icon fc-amber"><i class="fa-solid fa-file-waveform"></i></div>
+          <h3 data-i18n="feedback_report_title">Automated Summary</h3>
+          <p data-i18n="feedback_report_text">Generates concise risk highlights and follow-up recommendations after each session.</p>
+        </article>
+        <article class="feedback-card">
+          <div class="feedback-card-icon fc-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <h3 data-i18n="feedback_alert_title">Priority Alerts</h3>
+          <p data-i18n="feedback_alert_text">Flags high-risk movement signatures for immediate specialist review.</p>
+        </article>
+      </div>
+
+      <!-- WhatsApp Direct Message -->
+      <div class="wa-panel">
+        <div class="wa-header">
+          <span class="wa-icon"><i class="fa-brands fa-whatsapp"></i></span>
+          <div>
+            <p class="wa-title" data-i18n="wa_title">Send via WhatsApp</p>
+            <p class="wa-sub" data-i18n="wa_sub">Compose and send a session report to your care team instantly</p>
+          </div>
+        </div>
+
+        <div class="wa-grid">
+          <div class="wa-field">
+            <label class="field-label" data-i18n="wa_name_label">Your Name</label>
+            <input id="waName" type="text" class="form-control" placeholder="e.g. Dr. Ramesh" data-i18n-placeholder="wa_name_ph" />
+          </div>
+          <div class="wa-field">
+            <label class="field-label" data-i18n="wa_phone_label">Recipient WhatsApp No.</label>
+            <input id="waPhone" type="tel" class="form-control" placeholder="+91 98765 43210" data-i18n-placeholder="wa_phone_ph" />
+          </div>
+        </div>
+
+        <div class="wa-field">
+          <label class="field-label" data-i18n="wa_type_label">Report Type</label>
+          <select id="waType" class="form-select">
+            <option value="clinician" data-i18n="wa_type_clinician">Clinician Report</option>
+            <option value="caregiver" data-i18n="wa_type_caregiver">Caregiver Update</option>
+            <option value="alert"     data-i18n="wa_type_alert">Priority Alert</option>
+          </select>
+        </div>
+
+        <div class="wa-field">
+          <label class="field-label" data-i18n="wa_msg_label">Additional Notes</label>
+          <textarea id="waMessage" class="form-control" rows="3" style="min-height:80px;resize:vertical;" placeholder="Add clinical notes or observations..." data-i18n-placeholder="wa_msg_ph"></textarea>
+        </div>
+
+        <div class="wa-preview-label" data-i18n="wa_preview_label">Message Preview</div>
+        <div class="wa-preview" id="waPreview">—</div>
+
+        <button type="button" class="btn-whatsapp" id="waSendBtn" onclick="sendWhatsApp()">
+          <i class="fa-brands fa-whatsapp"></i>
+          <span data-i18n="wa_send">Open in WhatsApp</span>
+        </button>
+      </div>
+    </section>
+    {% endif %}
+  </main>
+</div>
 
 <script>
-  /* ----------------------------------------------------------------
-     showLoader — called on form submit
-     ---------------------------------------------------------------- */
-  function showLoader() {
-    const btn    = document.getElementById('submitBtn');
-    const loader = document.getElementById('loaderArea');
-    const input  = document.getElementById('videoInput');
+  const LANG_KEY = 'neurocare_lang';
+  const TRANSLATIONS = {
+    en: {
+      nav_technology: 'Technology',
+      nav_clinical: 'Clinical Data',
+      nav_gait: 'Gait Analysis',
+      nav_recall: 'Recall IQ',
+      nav_feedback: 'Feedback',
+      engine_active: 'Neural Link Active',
+      tech_badge: 'Neural System Architecture',
+      tech_title: 'Technology Stack Intelligence',
+      tech_sub: 'Understand how the end-to-end pipeline transforms raw gait video into clinical risk signals.',
+      tech_card_1_title: 'Pose Landmark Engine',
+      tech_card_1_text: 'MediaPipe extracts frame-level keypoints for head, spine, shoulder, hip, and lower-limb dynamics.',
+      tech_card_2_title: 'CNN Risk Inference',
+      tech_card_2_text: 'A trained CNN model evaluates motion signatures and predicts dementia risk with confidence-weighted scoring.',
+      tech_card_3_title: 'Clinical Visualization',
+      tech_card_3_text: 'Interactive dashboards convert technical outputs into explainable indicators for clinicians and caregivers.',
+      logout: 'Logout',
+      hero_badge: 'Cognitive Assessment Suite',
+      hero_title: 'Recall IQ Memory Assessment',
+      hero_sub: 'Comprehensive cognitive evaluation module designed to detect early signs of memory impairment through interactive tests and trend monitoring.',
+      module_word: 'Word Recall Test',
+      module_word_sub: 'Reverse and remember key words',
+      module_image: 'Image Memory Test',
+      module_image_sub: 'Visual recall with icon patterns',
+      module_number: 'Number Sequence Test',
+      module_number_sub: 'Track logic progression quickly',
+      module_daily: 'Daily Task Recall',
+      module_daily_sub: 'Assess routine memory responses',
+      upload_title: 'Clinical Data Intake',
+      secure_chip: 'Secure Pipeline',
+      upload_sub: 'Upload a patient walking clip. The AI model extracts posture landmarks and computes dementia risk from gait behavior.',
+      task_label: 'Task Configuration',
+      task_single: 'Single Task',
+      task_dual: 'Dual Task',
+      frame_label: 'Extraction Length',
+      file_label: 'Video File',
+      drop_title: 'Drop your video here',
+      drop_sub: 'MP4, AVI, MOV supported. Max size 200MB.',
+      file_selected: 'File selected',
+      run_analysis: 'Run Gait Analysis',
+      live_camera: 'Live Camera',
+      memory_center: 'Memory Test Center',
+      loader_text: 'Processing video and extracting gait frames...',
+      clinical_notes_title: 'Clinical Notes',
+      clinical_notes_sub: 'Recommended capture standards to improve prediction reliability.',
+      clinical_note_1: 'Camera angle',
+      clinical_note_1_value: 'Eye-level',
+      clinical_note_2: 'Walking path',
+      clinical_note_2_value: 'Straight 4-6m',
+      clinical_note_3: 'Lighting',
+      clinical_note_3_value: 'Uniform, no glare',
+      clinical_note_4: 'Frame quality',
+      clinical_note_4_value: 'Stable 24+ FPS',
+      session_title: 'Recent Sessions',
+      session_sub: 'Latest clinical runs with fast risk overview.',
+      gait_insight_title: 'Gait Insight Snapshot',
+      gait_insight_sub: 'Current model indicators from the latest evaluation run.',
+      date_one: 'Apr 02, 2026',
+      date_two: 'Mar 30, 2026',
+      date_three: 'Mar 28, 2026',
+      risk_low: 'Low',
+      risk_medium: 'Medium',
+      risk_high: 'High',
+      metric_spine: 'Spine Alignment',
+      metric_shoulder: 'Shoulder Symmetry',
+      metric_step: 'Step Regularity',
+      feedback_title: 'Feedback Intelligence',
+      feedback_badge: 'Assistive Reporting Layer',
+      feedback_sub: 'Built-in summaries for clinicians and caregivers.',
+      feedback_clinician: 'For Clinician',
+      feedback_clinician_text: 'Includes posture drift and dual task impact for quick triage.',
+      feedback_caregiver: 'For Caregiver',
+      feedback_caregiver_text: 'Provides simple daily guidance and monitoring reminders.',
+      feedback_report_title: 'Automated Summary',
+      feedback_report_text: 'Generates concise risk highlights and follow-up recommendations after each session.',
+      feedback_alert_title: 'Priority Alerts',
+      feedback_alert_text: 'Flags high-risk movement signatures for immediate specialist review.',
+      processing_btn: 'Analysing...',
+      unit_mb: 'MB',
+      wa_title: 'Send via WhatsApp',
+      wa_sub: 'Compose and send a session report to your care team instantly',
+      wa_name_label: 'Your Name',
+      wa_name_ph: 'e.g. Dr. Ramesh',
+      wa_phone_label: 'Recipient WhatsApp No.',
+      wa_phone_ph: '+91 98765 43210',
+      wa_type_label: 'Report Type',
+      wa_type_clinician: 'Clinician Report',
+      wa_type_caregiver: 'Caregiver Update',
+      wa_type_alert: 'Priority Alert',
+      wa_msg_label: 'Additional Notes',
+      wa_msg_ph: 'Add clinical notes or observations...',
+      wa_preview_label: 'Message Preview',
+      wa_send: 'Open in WhatsApp'
+    },
+    ta: {
+      nav_technology: 'தொழில்நுட்பம்',
+      nav_clinical: 'மருத்துவ தரவு',
+      nav_gait: 'நடை பகுப்பாய்வு',
+      nav_recall: 'நினைவு IQ',
+      nav_feedback: 'கருத்து',
+      engine_active: 'நியூரல் இணைப்பு செயல்பாட்டில்',
+      tech_badge: 'நியூரல் அமைப்பு கட்டமைப்பு',
+      tech_title: 'தொழில்நுட்ப அடுக்கு நுண்ணறிவு',
+      tech_sub: 'மூல நடை வீடியோவை மருத்துவ ஆபத்து சிக்னலாக மாற்றும் முழு செயல்முறையை காண்க.',
+      tech_card_1_title: 'Pose Landmark இயந்திரம்',
+      tech_card_1_text: 'MediaPipe தலை, முதுகு, தோள், இடுப்பு மற்றும் கீழ் உறுப்புகளின் frame-level keypoints-ஐ எடுக்கிறது.',
+      tech_card_2_title: 'CNN ஆபத்து மதிப்பீடு',
+      tech_card_2_text: 'பயிற்சி பெற்ற CNN, இயக்க வடிவங்களை மதிப்பீடு செய்து நம்பகத்தன்மையுடன் ஆபத்து மதிப்பெண் தருகிறது.',
+      tech_card_3_title: 'மருத்துவ காட்சி அமைப்பு',
+      tech_card_3_text: 'மருத்துவர் மற்றும் பராமரிப்பாளருக்காக தொழில்நுட்ப வெளிப்பாட்டை புரியக்கூடிய சுட்டிகைகளாக மாற்றுகிறது.',
+      logout: 'வெளியேறு',
+      hero_badge: 'அறிவு மதிப்பீட்டு தொகுப்பு',
+      hero_title: 'Recall IQ நினைவக மதிப்பீடு',
+      hero_sub: 'இணைய செயல்பாட்டு தேர்வுகள் மற்றும் தொடர்ச்சி கண்காணிப்பின் மூலம் நினைவக குறைபாட்டின் ஆரம்ப அறிகுறிகளை கண்டறிய வடிவமைக்கப்பட்ட முழுமையான அறிவு மதிப்பீட்டு பகுதி.',
+      module_word: 'சொல் நினைவு தேர்வு',
+      module_word_sub: 'சொற்களை தலைகீழாக நினைவில் கொள்க',
+      module_image: 'பட நினைவு தேர்வு',
+      module_image_sub: 'காண்பூக் குறியீடுகளை நினைவில் கொள்க',
+      module_number: 'எண் வரிசை தேர்வு',
+      module_number_sub: 'தர்க்க முன்னேற்றத்தை காண்க',
+      module_daily: 'தினசரி பணிகள் நினைவு',
+      module_daily_sub: 'வழக்கமான நினைவு பதிலை மதிப்பிடு',
+      upload_title: 'மருத்துவ தரவு உள்ளீடு',
+      secure_chip: 'பாதுகாப்பான ஓட்டம்',
+      upload_sub: 'நோயாளியின் நடைக்கும் வீடியோவை பதிவேற்றவும். AI மாதிரி உடல் குறி புள்ளிகளை எடுத்து மனஅமைப்பு ஆபத்தை கணக்கிடும்.',
+      task_label: 'பணி அமைப்பு',
+      task_single: 'ஒற்றை பணி',
+      task_dual: 'இரட்டை பணி',
+      frame_label: 'எடுத்தல் நீளம்',
+      file_label: 'வீடியோ கோப்பு',
+      drop_title: 'உங்கள் வீடியோவை இங்கு விடுங்கள்',
+      drop_sub: 'MP4, AVI, MOV ஆதரவு. அதிகபட்சம் 200MB.',
+      file_selected: 'கோப்பு தேர்ந்தெடுக்கப்பட்டது',
+      run_analysis: 'நடை பகுப்பாய்வு செய்',
+      live_camera: 'நேரடி கேமரா',
+      memory_center: 'நினைவு தேர்வு மையம்',
+      loader_text: 'வீடியோ செயலாக்கம் மற்றும் நடை பிரேம் எடுப்பு நடைபெறுகிறது...',
+      clinical_notes_title: 'மருத்துவ குறிப்புகள்',
+      clinical_notes_sub: 'மதிப்பீட்டு துல்லியத்தை உயர்த்த பரிந்துரைக்கப்பட்ட பதிவு விதிமுறைகள்.',
+      clinical_note_1: 'கேமரா கோணம்',
+      clinical_note_1_value: 'கண் உயரம்',
+      clinical_note_2: 'நடை பாதை',
+      clinical_note_2_value: 'நேரான 4-6மீ',
+      clinical_note_3: 'ஒளியமைப்பு',
+      clinical_note_3_value: 'சமமான ஒளி, glare இல்லை',
+      clinical_note_4: 'படத் தரம்',
+      clinical_note_4_value: 'நிலையான 24+ FPS',
+      session_title: 'சமீப அமர்வுகள்',
+      session_sub: 'சமீப மருத்துவ இயக்கங்களின் சுருக்கம்.',
+      gait_insight_title: 'நடை நுண்ணறிவு சுருக்கம்',
+      gait_insight_sub: 'சமீப மதிப்பீட்டிலிருந்து பெறப்பட்ட முக்கிய அளவீடுகள்.',
+      date_one: 'ஏப் 02, 2026',
+      date_two: 'மார் 30, 2026',
+      date_three: 'மார் 28, 2026',
+      risk_low: 'குறைவு',
+      risk_medium: 'மிதமான',
+      risk_high: 'அதிகம்',
+      metric_spine: 'முதுகெலும்பு அமைப்பு',
+      metric_shoulder: 'தோள் சமநிலை',
+      metric_step: 'அடி ஒழுங்கு',
+      feedback_title: 'கருத்து நுண்ணறிவு',
+      feedback_badge: 'உதவி அறிக்கை அடுக்கு',
+      feedback_sub: 'மருத்துவர் மற்றும் பராமரிப்பாளருக்கான உட்பொதிக்கப்பட்ட சுருக்கங்கள்.',
+      feedback_clinician: 'மருத்துவருக்கு',
+      feedback_clinician_text: 'விரைவான மதிப்பீட்டிற்கு உடல் சாய்வு மற்றும் இரட்டை பணி தாக்கங்களை காட்டும்.',
+      feedback_caregiver: 'பராமரிப்பாளருக்கு',
+      feedback_caregiver_text: 'எளிய தினசரி வழிகாட்டலும் கண்காணிப்பு நினைவூட்டல்களும் தரப்படுகிறது.',
+      feedback_report_title: 'தானியங்கி சுருக்கம்',
+      feedback_report_text: 'ஒவ்வொரு அமர்வுக்குப் பிறகும் ஆபத்து சுருக்கமும் அடுத்த நடவடிக்கை பரிந்துரைகளும் வழங்கப்படுகிறது.',
+      feedback_alert_title: 'முக்கிய எச்சரிக்கைகள்',
+      feedback_alert_text: 'அதிக ஆபத்து நடை வடிவங்களை உடனடி நிபுணர் பரிசீலனைக்காக குறிக்கிறது.',
+      processing_btn: 'பகுப்பாய்வு நடைபெறுகிறது...',
+      unit_mb: 'MB',
+      wa_title: 'WhatsApp-ல் அனுப்பு',
+      wa_sub: 'உங்கள் பராமரிப்பு குழுவிற்கு உடனடியாக அமர்வு அறிக்கை அனுப்பவும்',
+      wa_name_label: 'உங்கள் பெயர்',
+      wa_name_ph: 'எ.கா. டாக்டர் ரமேஷ்',
+      wa_phone_label: 'பெறுநர் WhatsApp எண்',
+      wa_phone_ph: '+91 98765 43210',
+      wa_type_label: 'அறிக்கை வகை',
+      wa_type_clinician: 'மருத்துவர் அறிக்கை',
+      wa_type_caregiver: 'பராமரிப்பாளர் புதுப்பிப்பு',
+      wa_type_alert: 'முக்கிய எச்சரிக்கை',
+      wa_msg_label: 'கூடுதல் குறிப்புகள்',
+      wa_msg_ph: 'மருத்துவ குறிப்புகள் அல்லது கவனிப்புகளை சேர்க்கவும்...',
+      wa_preview_label: 'செய்தி முன்னோட்டம்',
+      wa_send: 'WhatsApp-ல் திற'
+    }
+  };
 
-    if (!input.value) return; // let browser handle required validation
+  const state = {
+    lang: 'en',
+    file: null
+  };
 
-    setTimeout(function () {
-      btn.disabled = true;
-      btn.innerHTML = '<span style="width:18px;height:18px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin 0.8s linear infinite;"></span>&nbsp; Analysing…';
-    }, 0);
-    loader.style.display = 'flex';
-    loader.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  function t(key) {
+    return (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || TRANSLATIONS.en[key] || key;
   }
 
-  /* ----------------------------------------------------------------
-     File input — show selected file name
-     ---------------------------------------------------------------- */
-  document.getElementById('videoInput').addEventListener('change', function () {
+  function applyLanguage(lang) {
+    state.lang = TRANSLATIONS[lang] ? lang : 'en';
+    localStorage.setItem(LANG_KEY, state.lang);
+    document.documentElement.lang = state.lang === 'ta' ? 'ta' : 'en';
+
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    });
+
+    document.querySelectorAll('.lang-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.lang === state.lang);
+    });
+
+    renderSelectedFile();
+  }
+
+  function renderSelectedFile() {
     const info = document.getElementById('fileSelectedInfo');
-    const nameEl = document.getElementById('selectedFileName');
-    if (this.files && this.files.length > 0) {
-      const f = this.files[0];
-      const mb = (f.size / 1024 / 1024).toFixed(1);
-      nameEl.textContent = f.name + '  (' + mb + ' MB)';
-      info.style.display = 'block';
-    } else {
+    const label = document.getElementById('selectedFileName');
+    if (!info || !label) {
+      return;
+    }
+    if (!state.file) {
       info.style.display = 'none';
+      label.textContent = '';
+      return;
     }
-  });
+    const mb = (state.file.size / 1024 / 1024).toFixed(1);
+    label.textContent = `${state.file.name} (${mb} ${t('unit_mb')})`;
+    info.style.display = 'flex';
+  }
 
-  /* ----------------------------------------------------------------
-     Drag-and-drop highlight
-     ---------------------------------------------------------------- */
-  const zone = document.getElementById('uploadZone');
-
-  zone.addEventListener('dragover', function (e) {
-    e.preventDefault();
-    zone.classList.add('dragover');
-  });
-
-  zone.addEventListener('dragleave', function () {
-    zone.classList.remove('dragover');
-  });
-
-  zone.addEventListener('drop', function (e) {
-    e.preventDefault();
-    zone.classList.remove('dragover');
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      document.getElementById('videoInput').files = files;
-      document.getElementById('videoInput').dispatchEvent(new Event('change'));
+  function startAnalysis() {
+    var input = document.getElementById('videoInput');
+    if (!input || !input.files || !input.files.length) {
+      alert('Please select a video file first.');
+      return false; // block form submit
     }
+    // Show overlay AFTER confirming file exists — return true so form submits
+    setTimeout(function() {
+      var ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(3,9,20,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:sans-serif;color:#ecf4ff;';
+      ov.innerHTML = [
+        '<div style="font-size:3rem;animation:spin1 2s linear infinite;display:inline-block">⟳</div>',
+        '<div style="font-size:1.4rem;font-weight:700">Analysing Gait Patterns</div>',
+        '<div style="color:#7a95c8;font-size:0.9rem">AI pose detection running — please wait…</div>',
+        '<div style="width:300px;height:6px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden">',
+        '  <div id="ovBar" style="height:100%;width:5%;background:linear-gradient(90deg,#0ea5e9,#2dd4bf);border-radius:99px;transition:width 0.6s ease"></div>',
+        '</div>',
+        '<div id="ovStatus" style="color:#7a95c8;font-size:0.8rem">Reading video…</div>',
+        '<style>@keyframes spin1{to{transform:rotate(360deg)}}</style>'
+      ].join('');
+      document.body.appendChild(ov);
+      // Animate bar
+      var steps = [
+        [800,  15, 'Reading video frames…'],
+        [3000, 45, 'Detecting pose landmarks…'],
+        [6000, 70, 'Scoring biomechanics…'],
+        [9000, 88, 'Predicting risk level…']
+      ];
+      steps.forEach(function(s) {
+        setTimeout(function() {
+          var bar = document.getElementById('ovBar');
+          var lbl = document.getElementById('ovStatus');
+          if (bar) bar.style.width = s[1] + '%';
+          if (lbl) lbl.textContent = s[2];
+        }, s[0]);
+      });
+    }, 10);
+    return true; // allow form to submit
+  }
+
+  function showLoader() { return startAnalysis(); }
+
+  const videoInputEl = document.getElementById('videoInput');
+  if (videoInputEl) {
+    videoInputEl.addEventListener('change', function () {
+      state.file = (this.files && this.files[0]) ? this.files[0] : null;
+      renderSelectedFile();
+    });
+  }
+
+  const dropZone = document.getElementById('uploadZone');
+  if (dropZone && videoInputEl) {
+    dropZone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (!event.dataTransfer.files || !event.dataTransfer.files.length) return;
+      videoInputEl.files = event.dataTransfer.files;
+      videoInputEl.dispatchEvent(new Event('change'));
+    });
+  }
+
+  document.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
   });
+
+  const menuToggle = document.getElementById('menuToggle');
+  if (menuToggle) {
+    menuToggle.addEventListener('click', () => {
+      document.getElementById('topNav').classList.toggle('open');
+      document.getElementById('topActions').classList.toggle('open');
+    });
+  }
+
+  applyLanguage(localStorage.getItem(LANG_KEY) || 'en');
+
+  /* ── WhatsApp Message Builder ── */
+  function buildWAMessage() {
+    const name  = (document.getElementById('waName')?.value || '').trim();
+    const type  = document.getElementById('waType')?.value || 'clinician';
+    const notes = (document.getElementById('waMessage')?.value || '').trim();
+    const now   = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+    const typeLabels = {
+      clinician: t('wa_type_clinician'),
+      caregiver: t('wa_type_caregiver'),
+      alert:     t('wa_type_alert')
+    };
+
+    let msg = `🧠 *NeuroCare — ${typeLabels[type] || typeLabels.clinician}*\n`;
+    msg += `📅 ${now}\n`;
+    if (name) msg += `👤 ${name}\n`;
+    msg += `\n`;
+    if (notes) {
+      msg += `📋 *Notes:*\n${notes}\n\n`;
+    }
+    msg += `_Sent from NeuroCare Dementia Detection Framework_`;
+    return msg;
+  }
+
+  function updateWAPreview() {
+    const el = document.getElementById('waPreview');
+    if (!el) return;
+    el.textContent = buildWAMessage();
+  }
+
+  function sendWhatsApp() {
+    const phone = (document.getElementById('waPhone')?.value || '').replace(/\D/g, '');
+    const msg   = buildWAMessage();
+    const url   = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  /* Live preview binding */
+  ['waName', 'waType', 'waMessage'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateWAPreview);
+  });
+
+  /* Init preview on load */
+  updateWAPreview();
+
+  /* Update placeholders on language change */
+  const _origApply = applyLanguage;
+  applyLanguage = function(lang) {
+    _origApply(lang);
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+      el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+    updateWAPreview();
+  };
 </script>
-
 </body>
 </html>

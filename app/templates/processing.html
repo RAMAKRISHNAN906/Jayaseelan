@@ -1,150 +1,490 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GaitAnalysis Pro - Processing</title>
-
+  <title>NeuroCare — Analysing</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #030a19;
+      --line: rgba(140,172,224,0.15);
+      --text: #ecf4ff;
+      --muted: #7a95c8;
+      --accent: #38bdf8;
+      --accent2: #14b8a6;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 12% -8%, rgba(56,189,248,0.18), transparent 65%),
+        radial-gradient(ellipse 65% 45% at 92% 4%, rgba(20,184,166,0.15), transparent 60%),
+        radial-gradient(ellipse 58% 48% at 50% 110%, rgba(168,85,247,0.09), transparent 65%);
+      animation: auroraDrift 14s ease-in-out infinite alternate;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(126,157,210,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126,157,210,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 70% at center, black 20%, transparent 70%);
+    }
+    @keyframes auroraDrift {
+      0%   { opacity: 1; transform: scale(1) translateY(0); }
+      100% { opacity: 0.85; transform: scale(1.04) translateY(-12px); }
+    }
+
+    /* TOPBAR */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(22px) saturate(180%);
+      background: rgba(3,9,20,0.85);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.38);
+    }
+    .topbar-inner {
+      min-height: 68px; display: flex; align-items: center;
+      justify-content: space-between; padding: 10px 24px;
+    }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-family: 'Sora', sans-serif; font-weight: 700; }
+    .brand-icon {
+      width: 38px; height: 38px; border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0ea5e9, #0f766e); color: #fff; font-size: 1rem;
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.4), 0 8px 22px rgba(14,165,233,0.3);
+    }
+    .brand-name {
+      background: linear-gradient(90deg, #e0f2fe, #99f6e4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-size: 1.05rem;
+    }
+    .brand small { display: block; color: var(--muted); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; -webkit-text-fill-color: var(--muted); }
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 7px;
+      border-radius: 12px; border: 1px solid var(--line);
+      background: rgba(6,14,34,0.72); color: var(--text);
+      font-size: 0.82rem; font-weight: 700; padding: 7px 14px;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .btn-back:hover { color: #e2f6ff; border-color: rgba(56,189,248,0.36); background: rgba(56,189,248,0.08); }
+
+    /* MAIN */
+    .main-wrap {
+      position: relative; z-index: 1; flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 16px 60px;
+    }
+    .panel {
+      width: 100%; max-width: 580px;
+      background: linear-gradient(158deg, rgba(7,16,37,0.97), rgba(5,11,27,0.93));
+      border: 1px solid var(--line); border-radius: 28px;
+      box-shadow: 0 24px 56px rgba(1,6,18,0.7), 0 1px 0 rgba(125,211,252,0.08) inset;
+      overflow: hidden; position: relative;
+    }
+    .panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(125,211,252,0.5) 35%, rgba(45,212,191,0.42) 65%, transparent);
+    }
+    .panel-body { padding: 36px 36px 32px; }
+
+    /* BRAIN RING */
+    .brain-wrap { display: flex; justify-content: center; margin-bottom: 28px; }
+    .brain-ring {
+      position: relative; width: 100px; height: 100px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ring-svg {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      animation: spinRing 2.4s linear infinite;
+    }
+    .ring-bg {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+    }
+    .brain-icon {
+      width: 68px; height: 68px; border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, rgba(56,189,248,0.28), rgba(20,184,166,0.22));
+      border: 1px solid rgba(56,189,248,0.32);
+      color: #7dd3fc; font-size: 1.7rem;
+      box-shadow: 0 8px 28px rgba(56,189,248,0.22), 0 0 0 6px rgba(56,189,248,0.06);
+      z-index: 1;
+      animation: iconPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes spinRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 8px 28px rgba(56,189,248,0.22), 0 0 0 6px rgba(56,189,248,0.06); }
+      50% { box-shadow: 0 8px 36px rgba(56,189,248,0.4), 0 0 0 10px rgba(56,189,248,0.1); }
+    }
+
+    /* TITLE */
+    .proc-title {
+      text-align: center; font-family: 'Sora', sans-serif;
+      font-size: 1.4rem; font-weight: 800; margin: 0 0 6px;
+      background: linear-gradient(118deg, #f0f9ff, #bae6fd 55%, #99f6e4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .proc-sub { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 0 0 30px; line-height: 1.6; }
+
+    /* PROGRESS */
+    .progress-wrap { margin-bottom: 28px; }
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .progress-label { font-size: 0.78rem; color: #94b8de; font-weight: 700; }
+    .progress-pct {
+      font-family: 'Sora', sans-serif; font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(90deg, #38bdf8, #2dd4bf);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1;
+    }
+    .progress-track {
+      height: 6px; border-radius: 999px;
+      background: rgba(140,172,224,0.12); overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .progress-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #0ea5e9, #38bdf8, #2dd4bf);
+      box-shadow: 0 0 12px rgba(56,189,248,0.6);
+      transition: width 1s cubic-bezier(0.22,1,0.36,1);
+      width: 5%;
+    }
+    .progress-fill.done {
+      background: linear-gradient(90deg, #22c55e, #4ade80, #86efac);
+      box-shadow: 0 0 14px rgba(34,197,94,0.6);
+    }
+    .progress-fill.error {
+      background: linear-gradient(90deg, #ef4444, #f87171);
+      box-shadow: 0 0 12px rgba(239,68,68,0.5);
+    }
+
+    /* STEPS */
+    .steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .step {
+      display: flex; align-items: center; gap: 12px;
+      border-radius: 14px; border: 1px solid rgba(140,172,224,0.12);
+      background: rgba(5,13,30,0.6); padding: 11px 14px;
+      transition: all 0.4s ease;
+    }
+    .step.active { border-color: rgba(56,189,248,0.38); background: rgba(56,189,248,0.08); }
+    .step.done   { border-color: rgba(34,197,94,0.32);  background: rgba(34,197,94,0.06); }
+    .step-dot {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; border: 1px solid rgba(140,172,224,0.18);
+      background: rgba(5,13,30,0.8); color: var(--muted);
+      transition: all 0.4s ease;
+    }
+    .step.active .step-dot { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.42); color: #7dd3fc; box-shadow: 0 0 14px rgba(56,189,248,0.3); }
+    .step.done   .step-dot { background: rgba(34,197,94,0.16);  border-color: rgba(34,197,94,0.42);  color: #4ade80; box-shadow: 0 0 12px rgba(34,197,94,0.28); }
+    .step-spinner { width: 16px; height: 16px; border: 2px solid rgba(56,189,248,0.28); border-top-color: #7dd3fc; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .step-text { flex: 1; min-width: 0; }
+    .step-text strong { display: block; font-size: 0.84rem; font-weight: 700; color: #d8e9ff; }
+    .step-text small  { font-size: 0.72rem; color: var(--muted); }
+    .step.active .step-text strong { color: #bae6fd; }
+    .step.done   .step-text strong { color: #bbf7d0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* INFO CARDS */
+    .info-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    .info-card { border-radius: 12px; border: 1px solid rgba(140,172,224,0.12); background: rgba(4,11,26,0.6); padding: 10px 12px; }
+    .info-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 2px; }
+    .info-val { font-size: 0.8rem; font-weight: 700; color: #c8deff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* STATUS */
+    .status-msg { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 0; min-height: 20px; }
+    .status-msg strong { color: #7dd3fc; }
+
+    /* ERROR */
+    .error-box {
+      display: none; border-radius: 14px; border: 1px solid rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.08); color: #fca5a5;
+      padding: 14px 16px; font-size: 0.83rem; margin-bottom: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .panel-body { padding: 24px 18px; }
+      .info-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-<nav class="navbar-premium">
-  <div class="container d-flex align-items-center justify-content-between">
-    <a href="{{ url_for('dashboard') }}" class="navbar-brand-text d-flex align-items-center gap-2" style="text-decoration:none;">
-      <span style="
-        width:34px; height:34px;
-        background: linear-gradient(135deg, #7c3aed, #4f46e5);
-        border-radius:9px;
-        display:flex; align-items:center; justify-content:center;
-        font-size:1.1rem; color:#fff;
-        box-shadow:0 4px 14px rgba(124,58,237,0.45);
-        flex-shrink:0;
-      ">
-        <i class="fa-solid fa-brain"></i>
+<nav class="topbar">
+  <div class="topbar-inner">
+    <a href="{{ url_for('dashboard') }}" class="brand">
+      <span class="brand-icon"><i class="fa-solid fa-brain"></i></span>
+      <span>
+        <span class="brand-name">NeuroCare</span>
+        <small>Gait Analysis Engine</small>
       </span>
-      GaitAnalysis Pro
     </a>
-    <a href="{{ url_for('logout') }}" class="btn-ghost" style="padding:7px 16px; font-size:0.82rem;">
-      <i class="fa-solid fa-arrow-right-from-bracket"></i>
-      Logout
+    <a href="{{ url_for('dashboard') }}" class="btn-back">
+      <i class="fa-solid fa-arrow-left"></i> Dashboard
     </a>
   </div>
 </nav>
 
-<div class="container" style="max-width:860px; padding:56px 0 70px;">
-  <div class="glass-card animate-fade">
-    <div class="section-title">
-      <div class="title-icon"><i class="fa-solid fa-gears"></i></div>
-      Background Extraction In Progress
-    </div>
+<div class="main-wrap">
+  <div class="panel">
+    <div class="panel-body">
 
-    <div class="analysis-loader" id="processingBox" style="align-items:center;">
-      <div class="loader-spinner"></div>
-      <div class="loader-text" id="statusText">Uploading and extracting gait frames...</div>
-      <div style="font-size:0.78rem; color:#8f89ba; text-align:center;">
-        You can move this tab to background. Extraction continues on the server.
+      <div class="brain-wrap">
+        <div class="brain-ring">
+          <!-- Static dim ring -->
+          <svg class="ring-bg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(56,189,248,0.08)" stroke-width="2.5"/>
+          </svg>
+          <!-- Spinning dashed ring -->
+          <svg class="ring-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="46" fill="none"
+              stroke="url(#ringGrad)" stroke-width="2.5"
+              stroke-dasharray="20 9" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="brain-icon"><i class="fa-solid fa-brain"></i></div>
+        </div>
       </div>
-    </div>
 
-    <div class="divider"></div>
+      <h1 class="proc-title">Analysing Gait Patterns</h1>
+      <p class="proc-sub">AI pose detection is running — extracting landmarks<br>and scoring 10 biomechanical metrics.</p>
 
-    <div class="row g-3" style="font-size:0.86rem;">
-      <div class="col-sm-6">
-        <div class="form-label" style="margin-bottom:5px;">Task Type</div>
-        <div style="color:#c4b5fd; font-weight:600; text-transform:capitalize;">{{ task_type }} task</div>
+      <!-- Progress -->
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label" id="progressLabel">Initialising…</span>
+          <span class="progress-pct" id="progressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
       </div>
-      <div class="col-sm-6">
-        <div class="form-label" style="margin-bottom:5px;">File</div>
-        <div style="color:#a8a3cc; word-break:break-all;">{{ file_name }}</div>
-      </div>
-      <div class="col-12">
-        <div class="form-label" style="margin-bottom:5px;">Job ID</div>
-        <div style="color:#6b6891; font-family:monospace;">{{ job_id }}</div>
-      </div>
-    </div>
 
-    <div id="errorBox" class="alert alert-danger d-none mt-3" role="alert"></div>
+      <!-- Steps -->
+      <div class="steps">
+        <div class="step active" id="step1">
+          <div class="step-dot"><div class="step-spinner"></div></div>
+          <div class="step-text">
+            <strong>Reading video frames</strong>
+            <small>Sampling 30 evenly-spaced frames</small>
+          </div>
+        </div>
+        <div class="step" id="step2">
+          <div class="step-dot"><i class="fa-solid fa-person-walking"></i></div>
+          <div class="step-text">
+            <strong>Pose landmark detection</strong>
+            <small>MediaPipe skeleton extraction</small>
+          </div>
+        </div>
+        <div class="step" id="step3">
+          <div class="step-dot"><i class="fa-solid fa-chart-simple"></i></div>
+          <div class="step-text">
+            <strong>Biomechanical scoring</strong>
+            <small>10-metric gait quality analysis</small>
+          </div>
+        </div>
+        <div class="step" id="step4">
+          <div class="step-dot"><i class="fa-solid fa-brain"></i></div>
+          <div class="step-text">
+            <strong>Risk prediction</strong>
+            <small>Cognitive risk classification</small>
+          </div>
+        </div>
+      </div>
 
-    <div class="mt-4 d-flex gap-2">
-      <a href="{{ url_for('dashboard') }}" class="btn-ghost">
-        <i class="fa-solid fa-arrow-left"></i>
-        Back to Dashboard
-      </a>
+      <!-- Info cards -->
+      <div class="info-row">
+        <div class="info-card">
+          <div class="info-label">Task</div>
+          <div class="info-val" style="text-transform:capitalize;">{{ task_type }}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">File</div>
+          <div class="info-val" title="{{ file_name }}">{{ file_name }}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Status</div>
+          <div class="info-val" id="statusBadge">Queued</div>
+        </div>
+      </div>
+
+      <!-- Status message -->
+      <div class="status-msg" id="statusMsg">Waiting to start…</div>
+
+      <!-- Error -->
+      <div class="error-box" id="errorBox"></div>
+
     </div>
   </div>
 </div>
 
 <script>
-  const statusUrl = "{{ url_for('predict_status', job_id=job_id) }}";
-  const fallbackResultUrl = "{{ url_for('predict_result', job_id=job_id) }}";
-  const statusText = document.getElementById('statusText');
+  const STATUS_URL       = "{{ url_for('predict_status', job_id=job_id) }}";
+  const RESULT_FALLBACK  = "{{ url_for('predict_result', job_id=job_id) }}";
+
+  const fill     = document.getElementById('progressFill');
+  const pctEl    = document.getElementById('progressPct');
+  const labelEl  = document.getElementById('progressLabel');
+  const statusEl = document.getElementById('statusMsg');
+  const badge    = document.getElementById('statusBadge');
   const errorBox = document.getElementById('errorBox');
 
-  let pollTimer = null;
-  let inFlight = false;
+  /* Threshold → step index (0-based) */
+  const STEP_MAP = [
+    { threshold: 0,  stepIdx: 0, label: 'Reading video frames…' },
+    { threshold: 30, stepIdx: 1, label: 'Detecting pose landmarks…' },
+    { threshold: 60, stepIdx: 2, label: 'Scoring biomechanics…' },
+    { threshold: 75, stepIdx: 3, label: 'Predicting risk level…' },
+  ];
 
-  function showError(message) {
-    errorBox.textContent = message || 'Video extraction failed. Please retry.';
-    errorBox.classList.remove('d-none');
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
+  let currentStep = 0;
+  let done = false;
+  let inFlight = false;
+  let pollTimer = null;
+  let displayPct = 0;
+
+  function setStep(idx) {
+    for (let i = 0; i < 4; i++) {
+      const el = document.getElementById('step' + (i + 1));
+      if (i < idx) {
+        el.className = 'step done';
+        el.querySelector('.step-dot').innerHTML = '<i class="fa-solid fa-check"></i>';
+      } else if (i === idx) {
+        el.className = 'step active';
+        el.querySelector('.step-dot').innerHTML = '<div class="step-spinner"></div>';
+      } else {
+        el.className = 'step';
+      }
     }
-    statusText.textContent = 'Processing stopped due to an error.';
+  }
+
+  function animatePct(target) {
+    if (displayPct >= target) { pctEl.textContent = target + '%'; displayPct = target; return; }
+    const step = Math.max(1, Math.ceil((target - displayPct) / 8));
+    const id = setInterval(() => {
+      displayPct = Math.min(target, displayPct + step);
+      pctEl.textContent = displayPct + '%';
+      if (displayPct >= target) clearInterval(id);
+    }, 50);
+  }
+
+  function updateProgress(pct, stepLabel) {
+    fill.style.width = pct + '%';
+    animatePct(pct);
+    labelEl.textContent = stepLabel || '';
+
+    const mapEntry = [...STEP_MAP].reverse().find(m => pct >= m.threshold) || STEP_MAP[0];
+    if (mapEntry.stepIdx !== currentStep) {
+      currentStep = mapEntry.stepIdx;
+      setStep(currentStep);
+    }
+  }
+
+  function markAllDone() {
+    done = true;
+    clearInterval(pollTimer);
+    for (let i = 0; i < 4; i++) {
+      const el = document.getElementById('step' + (i + 1));
+      el.className = 'step done';
+      el.querySelector('.step-dot').innerHTML = '<i class="fa-solid fa-check"></i>';
+    }
+    fill.style.width = '100%';
+    fill.classList.add('done');
+    animatePct(100);
+    labelEl.textContent = 'Analysis complete!';
+    badge.textContent = 'Done';
+    badge.style.color = '#4ade80';
+    statusEl.innerHTML = '<strong style="color:#4ade80;">✓ Complete — loading results…</strong>';
+  }
+
+  function showError(msg) {
+    done = true;
+    clearInterval(pollTimer);
+    fill.classList.add('error');
+    fill.style.width = '100%';
+    errorBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#f87171;margin-right:8px;"></i>' + (msg || 'Processing failed. Please try again.');
+    errorBox.style.display = 'block';
+    statusEl.innerHTML = '<strong style="color:#f87171;">Processing stopped.</strong>';
+    badge.textContent = 'Error';
+    badge.style.color = '#f87171';
   }
 
   async function checkStatus() {
-    if (inFlight) return;
+    if (inFlight || done) return;
     inFlight = true;
-
     try {
-      const response = await fetch(statusUrl, { cache: 'no-store' });
-      const data = await response.json().catch(() => ({}));
+      const res  = await fetch(STATUS_URL, { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
 
-      if (!response.ok || !data.success) {
-        showError(data.message || 'Unable to read extraction status.');
+      if (!res.ok || !data.success) {
+        showError(data.message || 'Cannot reach server. Is the app still running?');
         return;
       }
 
-      if (data.status === 'done') {
-        window.location.assign(data.result_url || fallbackResultUrl);
+      const serverPct  = data.progress || 0;
+      const serverStep = data.step || '';
+      const status     = data.status;
+
+      badge.textContent = status === 'processing' ? 'Running' : status === 'queued' ? 'Queued' : status;
+
+      if (status === 'done') {
+        updateProgress(100, 'Complete!');
+        setTimeout(() => { markAllDone(); }, 300);
+        setTimeout(() => { window.location.assign(data.result_url || RESULT_FALLBACK); }, 1400);
         return;
       }
 
-      if (data.status === 'error') {
-        showError(data.error || 'Video extraction failed.');
+      if (status === 'error') {
+        showError(data.error || 'Video processing failed.');
         return;
       }
 
-      if (data.status === 'processing') {
-        statusText.textContent = 'Extraction running in background...';
+      /* Show real server progress, never go backward */
+      if (serverPct > displayPct || serverPct > 5) {
+        updateProgress(serverPct, serverStep);
+      }
+
+      if (status === 'processing') {
+        statusEl.innerHTML = 'Processing on server — <strong>please wait…</strong>';
       } else {
-        statusText.textContent = 'Job queued. Starting extraction...';
+        statusEl.textContent = 'Job queued — starting shortly…';
       }
     } catch (err) {
-      showError('Network error while checking extraction status.');
+      /* network blip — keep polling */
+      statusEl.textContent = 'Waiting for server…';
     } finally {
       inFlight = false;
     }
   }
 
-  function startPolling() {
-    checkStatus();
-    pollTimer = setInterval(checkStatus, 2000);
-  }
+  /* Init */
+  setStep(0);
+  checkStatus();
+  pollTimer = setInterval(checkStatus, 1500);
 
-  document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) {
-      checkStatus();
-    }
-  });
-
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkStatus(); });
   window.addEventListener('focus', checkStatus);
-  startPolling();
 </script>
-
 </body>
 </html>
