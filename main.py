@@ -443,9 +443,24 @@ def predict():
         cache_key = f"{video_sha256}_{task_type}"
         video_url = _build_video_url(video_bytes, video_sha256, file_name)
 
-        # Check memory cache first, then disk cache
+        # 1. Memory cache (fastest)
         with _prediction_cache_lock:
             cached = _prediction_cache.get(cache_key)
+
+        # 2. Firebase persistent cache (survives restarts/redeploys)
+        if not cached:
+            try:
+                fb_key = cache_key[:40].replace('.', '_')
+                snap = db.reference(f'video_cache/{fb_key}').get()
+                if snap and snap.get('prediction'):
+                    cached = snap
+                    print(f"[Predict] Served from Firebase cache: {fb_key}")
+                    with _prediction_cache_lock:
+                        _prediction_cache[cache_key] = cached
+            except Exception:
+                pass
+
+        # 3. Disk cache (local fallback)
         if not cached:
             cached = _load_cache(cache_key)
             if cached:
@@ -453,15 +468,15 @@ def predict():
                     _prediction_cache[cache_key] = cached
 
         if cached:
-            print(f"[Predict] Served from cache: {cache_key[:20]}")
             return render_template(
                 'results.html',
                 prediction=cached["prediction"],
                 task_type=task_type,
-                debug_frames=cached["debug_frames"],
+                debug_frames=cached.get("debug_frames", []),
                 video_url=video_url,
             )
 
+        # Not cached — compute now
         os.makedirs('uploads', exist_ok=True)
         upload_filename = _safe_upload_filename(file_name, video_sha256)
         video_path = os.path.join('uploads', upload_filename)
@@ -474,21 +489,26 @@ def predict():
 
         debug_frames = save_debug_frames(processed_frames, video_hash=video_sha256)
 
-        print(f"[Predict] Running CNN model…")
         model = load_dementia_model()
         prediction = predict_risk(model, processed_frames, task_type, walking_quality)
         print(f"[Predict] Prediction: level={prediction.get('level')}, score={prediction.get('score')}")
 
         result_data = {"prediction": prediction, "debug_frames": debug_frames}
+
+        # Store in all caches
         with _prediction_cache_lock:
             _prediction_cache[cache_key] = result_data
         _save_cache(cache_key, result_data)
 
-        # Fire-and-forget Firebase write — never block the response
-        def _fb_write(uid, tt, pred):
+        # Fire-and-forget: save to Firebase cache + user results log
+        def _fb_write(uid, tt, pred, rdata, ckey):
             try:
-                ref = db.reference(f'results/{uid}')
-                ref.push({
+                fb_key = ckey[:40].replace('.', '_')
+                db.reference(f'video_cache/{fb_key}').set(rdata)
+            except Exception:
+                pass
+            try:
+                db.reference(f'results/{uid}').push({
                     'task_type': tt,
                     'risk_score': pred['score'],
                     'risk_level': pred['level'],
@@ -496,7 +516,11 @@ def predict():
                 })
             except Exception:
                 pass
-        threading.Thread(target=_fb_write, args=(current_user.id, task_type, prediction), daemon=True).start()
+        threading.Thread(
+            target=_fb_write,
+            args=(current_user.id, task_type, prediction, result_data, cache_key),
+            daemon=True
+        ).start()
 
         print(f"[Predict] Done — rendering results.")
         return render_template(
