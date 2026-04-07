@@ -36,37 +36,6 @@
       overflow-x: hidden;
     }
 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(ellipse 80% 50% at 12% -8%, rgba(56,189,248,0.18) 0%, transparent 65%),
-        radial-gradient(ellipse 65% 45% at 92% 4%, rgba(20,184,166,0.15) 0%, transparent 60%),
-        radial-gradient(ellipse 55% 50% at 50% 108%, rgba(168,85,247,0.09) 0%, transparent 65%);
-      animation: auroraDrift 20s ease-in-out infinite alternate;
-    }
-
-    @keyframes auroraDrift {
-      0%   { transform: translate(0,0) scale(1); }
-      50%  { transform: translate(-18px,14px) scale(1.02); }
-      100% { transform: translate(14px,-8px) scale(0.99); }
-    }
-
-    .neuro-shell::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background-image:
-        linear-gradient(rgba(126,157,210,0.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(126,157,210,0.038) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 85% 75% at center, black 20%, transparent 70%);
-    }
 
     /* ── TOPBAR ── */
     .neuro-topbar {
@@ -923,7 +892,7 @@
   </style>
 </head>
 <body>
-{% set active_tab = active_tab|default('recall') %}
+{% set active_tab = active_tab|default('clinical') %}
 <div class="neuro-shell">
   <nav class="neuro-topbar">
     <div class="container-fluid px-lg-4 px-3">
@@ -941,11 +910,9 @@
         </button>
 
         <div id="topNav" class="top-nav">
-          <a href="{{ url_for('dashboard_technology') }}" class="{{ 'active' if active_tab == 'technology' else '' }}" data-i18n="nav_technology">Technology</a>
-          <a href="{{ url_for('dashboard_clinical') }}" class="{{ 'active' if active_tab == 'clinical' else '' }}" data-i18n="nav_clinical">Clinical Data</a>
-          <a href="{{ url_for('dashboard_gait') }}" class="{{ 'active' if active_tab == 'gait' else '' }}" data-i18n="nav_gait">Gait Analysis</a>
-          <a href="{{ url_for('dashboard_recall') }}" class="{{ 'active' if active_tab == 'recall' else '' }}" data-i18n="nav_recall">Recall IQ</a>
-          <a href="{{ url_for('dashboard_feedback') }}" class="{{ 'active' if active_tab == 'feedback' else '' }}" data-i18n="nav_feedback">Feedback</a>
+          <a href="{{ url_for('dashboard_clinical') }}" class="{{ 'active' if active_tab == 'clinical' else '' }}">Clinical Data</a>
+          <a href="{{ url_for('dashboard_recall') }}" class="{{ 'active' if active_tab == 'recall' else '' }}">Recall IQ</a>
+          <a href="{{ url_for('dashboard_feedback') }}" class="{{ 'active' if active_tab == 'feedback' else '' }}">Feedback</a>
         </div>
 
         <div id="topActions" class="top-actions">
@@ -974,32 +941,6 @@
   </nav>
 
   <main class="dashboard-main container-fluid px-lg-4 px-3 py-4 pb-5">
-    {% if active_tab == 'technology' %}
-    <section class="panel panel-hero animate-rise">
-      <div class="hero-icon"><i class="fa-solid fa-microchip"></i></div>
-      <p class="hero-badge" data-i18n="tech_badge">Neural System Architecture</p>
-      <h1 class="hero-title" data-i18n="tech_title">Technology Stack Intelligence</h1>
-      <p class="hero-sub" data-i18n="tech_sub">Understand how the end-to-end pipeline transforms raw gait video into clinical risk signals.</p>
-
-      <div class="tech-card-row">
-        <article class="tech-card">
-          <div class="tc-icon tc-blue"><i class="fa-solid fa-microchip-ai"></i></div>
-          <h3 data-i18n="tech_card_1_title">Pose Landmark Engine</h3>
-          <p data-i18n="tech_card_1_text">MediaPipe extracts frame-level keypoints for head, spine, shoulder, hip, and lower-limb dynamics.</p>
-        </article>
-        <article class="tech-card">
-          <div class="tc-icon tc-teal"><i class="fa-solid fa-network-wired"></i></div>
-          <h3 data-i18n="tech_card_2_title">CNN Risk Inference</h3>
-          <p data-i18n="tech_card_2_text">A trained CNN model evaluates motion signatures and predicts dementia risk with confidence-weighted scoring.</p>
-        </article>
-        <article class="tech-card">
-          <div class="tc-icon tc-purple"><i class="fa-solid fa-chart-area"></i></div>
-          <h3 data-i18n="tech_card_3_title">Clinical Visualization</h3>
-          <p data-i18n="tech_card_3_text">Interactive dashboards convert technical outputs into explainable indicators for clinicians and caregivers.</p>
-        </article>
-      </div>
-    </section>
-    {% endif %}
 
     {% if active_tab == 'clinical' %}
     <div class="row g-4 mt-1">
@@ -1085,77 +1026,6 @@
     </div>
     {% endif %}
 
-    {% if active_tab == 'gait' %}
-    <div class="row g-4 mt-1">
-      <div class="col-xl-7">
-        <section class="panel panel-body animate-rise">
-          <div class="panel-head">
-            <h2 data-i18n="session_title">Recent Sessions</h2>
-            <span class="chip"><i class="fa-solid fa-wave-square"></i> AI</span>
-          </div>
-          <p class="panel-sub" data-i18n="session_sub">Latest clinical runs with fast risk overview.</p>
-
-          <div class="session-list">
-            <article class="session-item ok-item">
-              <span class="session-dot dot-ok"></span>
-              <div class="session-text">
-                <strong>Single Task — walk_01.mp4</strong>
-                <small data-i18n="date_one">Apr 02, 2026</small>
-              </div>
-              <span class="risk-tag risk-low" data-i18n="risk_low">Low</span>
-            </article>
-
-            <article class="session-item warn-item">
-              <span class="session-dot dot-warn"></span>
-              <div class="session-text">
-                <strong>Dual Task — corridor_02.mp4</strong>
-                <small data-i18n="date_two">Mar 30, 2026</small>
-              </div>
-              <span class="risk-tag risk-medium" data-i18n="risk_medium">Medium</span>
-            </article>
-
-            <article class="session-item danger-item">
-              <span class="session-dot dot-danger"></span>
-              <div class="session-text">
-                <strong>Single Task — elder_03.avi</strong>
-                <small data-i18n="date_three">Mar 28, 2026</small>
-              </div>
-              <span class="risk-tag risk-high" data-i18n="risk_high">High</span>
-            </article>
-          </div>
-        </section>
-      </div>
-
-      <div class="col-xl-5">
-        <section class="panel panel-body animate-rise delay-1">
-          <div class="panel-head">
-            <h2 data-i18n="gait_insight_title">Gait Insight Snapshot</h2>
-          </div>
-          <p class="panel-sub" data-i18n="gait_insight_sub">Current model indicators from the latest evaluation run.</p>
-
-          <div class="mini-box">
-            <div class="mini-line"><span data-i18n="metric_spine">Spine Alignment</span><strong>82%</strong></div>
-            <div class="mini-track"><div class="mini-fill" style="width:82%"></div></div>
-            <div class="mini-line"><span data-i18n="metric_shoulder">Shoulder Symmetry</span><strong>77%</strong></div>
-            <div class="mini-track"><div class="mini-fill" style="width:77%"></div></div>
-            <div class="mini-line"><span data-i18n="metric_step">Step Regularity</span><strong>73%</strong></div>
-            <div class="mini-track"><div class="mini-fill" style="width:73%"></div></div>
-          </div>
-
-          <div class="action-row">
-            <a href="{{ url_for('realtime') }}" class="btn-main">
-              <i class="fa-solid fa-camera"></i>
-              <span data-i18n="live_camera">Live Camera</span>
-            </a>
-            <a href="{{ url_for('dashboard_clinical') }}" class="btn-sub">
-              <i class="fa-solid fa-upload"></i>
-              <span data-i18n="upload_title">Clinical Data Intake</span>
-            </a>
-          </div>
-        </section>
-      </div>
-    </div>
-    {% endif %}
 
     {% if active_tab == 'recall' %}
     <section class="panel panel-hero animate-rise">

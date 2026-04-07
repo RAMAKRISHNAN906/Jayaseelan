@@ -382,7 +382,7 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return redirect(url_for('dashboard_recall'))
+    return redirect(url_for('dashboard_clinical'))
 
 
 @app.route('/technology')
